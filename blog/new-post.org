@@ -1,0 +1,15 @@
+#+TITLE:       Generate random string in clojure
+#+AUTHOR:      Volodymyr Kotushenko
+#+EMAIL:       volodymyr.kotushenko@gmail.com
+#+DATE:        2019-12-24 Tue
+#+URI:         /blog/%y/%m/%d/generate-random-string-in-clojure
+#+KEYWORDS:    clojure, generate, string, random
+#+TAGS:        clojure, beginner, generator
+#+LANGUAGE:    en
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: This is description
+* Let's all begin
+  #+NAME: test-clj
+  #+begin_src clojure :results pp
+    (+ 2 2)
+  #+END_SRC
