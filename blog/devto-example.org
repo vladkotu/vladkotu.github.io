@@ -1,0 +1,29 @@
+#+TITLE:       Fallback on maps lookup on Clojure (or a gentle introduction to macros)
+#+AUTHOR:      Volodymyr Kotushenko
+#+EMAIL:       volodymyr.kotushenko@gmail.com
+#+DATE:        2019-12-24 Tue
+#+URI:         /blog/%y/%m/%d/fallback-on-maps-lookup-on-clojure-(or-a-gentle-introduction-to-macros)
+#+KEYWORDS:    <TODO: insert your keywords here>
+#+TAGS:        <TODO: insert your tags here>
+#+LANGUAGE:    en
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: <TODO: insert your description here>
+* Fallback on maps lookup on Clojure (or a gentle introduction to macros)
+So, you have to deal with a map, but you can't be sure whether or not you have a
+value for a given key.
+
+The easiest, and probably the most known is to use the get function (that
+accepts optionally a third argument which is the fallback value).
+
+#+begin_src clojure :results pp
+(def a-qb {:name "Josh"
+           :surname "McCown"
+           :team "New York Jets"})
+
+(def another-qb {:name "Robert"
+                 :surname "Griffin III"})
+
+(get a-qb :team) ; => "New York Jets"
+(get another-qb :team) ; => nil 
+(get another-qb :team "Free Agent")
+#+END_SRC
