@@ -9,23 +9,53 @@
 #+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
 #+DESCRIPTION: <TODO: insert your description here>
 ** h2 head 
-*** h3 heading
-**** h4 heading
-  So, you have to deal with a map, but you can't be sure whether or not you have a
-  value for a given key.
+*** h3 headingng really long titi f Character is..
+**** h4 heading Character is...
+***** h5 thing really long titi f Character is...
+**** h4 heading Character is...
+***** h5 thing really long titi f Character is...
+   Character is...
+   #+begin_src clojure :results pp :eval never-export
+     (type \A)
+     ;; => java.lang.Character
+   #+END_SRC
+   Coerce Character to integer:
+   #+begin_src clojure :results pp :eval never-export
+     (int \A)
+     ;; => 65
+   #+END_SRC
+   Coerce Character to string:
+   #+begin_src clojure :results pp :eval never-export
+     (str \A)
+     ;; => "A"
+   #+END_SRC
+   Get Character from integer code:
+   #+begin_src clojure :results pp :eval never-export
+     (char 65)
+     ;; => \A
+   #+END_SRC
+   Unicode code of Character
+   #+begin_src clojure :results pp :eval never-export
+     (Integer/toString (int \A) 16)
+     ;; => "41"
+     (char \u0041)
+     ;; => \A
+   #+END_SRC 
+   So, you have to deal with a map, but you can't be sure whether or not you have a
+   value for a given key.
 
-  The easiest, and probably the most known is to use the get function (that
-  accepts optionally a third argument which is the fallback value).
+   The easiest, and probably the most known is to use the get function (that
+   accepts optionally a third argument which is the fallback value).
 
-  #+begin_src clojure :results pp
-  (def a-qb {:name "Josh"
-             :surname "McCown"
-             :team "New York Jets"})
+   #+begin_src clojure :results pp
+   (def a-qb {:name "Josh"
+              :surname "McCown"
+              :team "New York Jets"})
 
-  (def another-qb {:name "Robert"
-                   :surname "Griffin III"})
+   (def another-qb {:name "Robert"
+                    :surname "Griffin III"})
 
-  (get a-qb :team) ; => "New York Jets"
-  (get another-qb :team) ; => nil 
-  (get another-qb :team "Free Agent")
-  #+END_SRC
+   (get a-qb :team) ; => "New York Jets"
+   (get another-qb :team) ; => nil 
+   (get another-qb :team "Free Agent")
+   #+END_SRC
