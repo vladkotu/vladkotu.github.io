@@ -1,0 +1,12 @@
+#+TITLE:       kj
+#+AUTHOR:      Volodymyr Kotushenko
+#+EMAIL:       volodymyr.kotushenko@gmail.com
+#+DATE:        2019-12-24 Tue
+#+URI:         /blog/%y/%m/%d/kj
+#+KEYWORDS:    <TODO: insert your keywords here>
+#+TAGS:        <TODO: insert your tags here>
+#+LANGUAGE:    en
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: <TODO: insert your description here>
+
+* Custom folder structure
