@@ -10,9 +10,7 @@
   Agile tech mind with 10+ years of working
   experience as a computer programmer and team
   leader. Capable of working with a variety of
-  technologies and software solutions, such as
-  HTML, CSS, JavaScript (front-end) and NodeJS
-  Express (back-end). Excited about Clojure(Script).
+  technologies and truly excited about Clojure(Script).
 
 
 - Email: volodymyr.kotushenko@gmail.com
