@@ -1,0 +1,5 @@
+{
+ :deps
+ {incanter/incanter-core   {:mvn/version "1.9.2"}
+  incanter/incanter-charts {:mvn/version "1.9.2"}
+  incanter/incanter-io     {:mvn/version "1.9.2"}}}

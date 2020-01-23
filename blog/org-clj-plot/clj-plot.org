@@ -1,0 +1,32 @@
+* Org Clojure plotting
+Is this possible to reproduce the case, [[https://stardiviner.github.io/Blog/Clojure-Plotting-to-Org-inline-image-in-ob-clojure.html][described in this article]] ?
+
+#+begin_src clojure :results pp
+  [ 1 2 3 4]
+#+end_src
+
+#+RESULTS:
+: [1 2 3 4]
+
+#+begin_src clojure :results pp
+  (def small-map {:a 2 :b 4 :c 8})
+  (:b small-map)
+#+end_src
+
+#+RESULTS:
+: 4
+
+#+begin_src clojure
+  (use '(incanter core charts))
+  ;;; Create the x and y data:
+  (def x-data [0.0 1.0 2.0 3.0 4.0 5.0])
+  (def y-data [2.3 2.6 3.1 4.5 9 8])
+  (def xy-line (xy-plot x-data y-data))
+  (view xy-line)
+  ;; (save-pdf xy-line "incanter-xy-line.pdf")
+  (save xy-line "./plots/incanter-xy-line.png")
+#+end_src
+
+#+RESULTS:
+: nil#'user/x-data#'user/y-data#'user/xy-line#object[org.jfree.chart.ChartFrame 0x50e436cc "org.jfree.chart.ChartFrame[frame4,0,23,500x400,layout=java.awt.BorderLayout,title=Incanter Plot,resizable,normal,defaultCloseOperation=DISPOSE_ON_CLOSE,rootPane=javax.swing.JRootPane[,0,22,500x378,layout=javax.swing.JRootPane$RootLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777673,maximumSize=,minimumSize=,preferredSize=],rootPaneCheckingEnabled=true]"]class java.io.FileNotFoundExceptionclass java.io.FileNotFoundExceptionExecution error (FileNotFoundException) at java.io.FileOutputStream/open0 (FileOutputStream.java:-2).
+: ./plots/incanter-xy-line.png (No such file or directory)
