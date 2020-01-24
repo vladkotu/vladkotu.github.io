@@ -1,32 +1,139 @@
-* Org Clojure plotting
-Is this possible to reproduce the case, [[https://stardiviner.github.io/Blog/Clojure-Plotting-to-Org-inline-image-in-ob-clojure.html][described in this article]] ?
+#+TITLE:       Org-mode and Clojure
+#+AUTHOR:      Vladimir Kotushenko
+#+EMAIL:       volodymyr.kotushenko@gmail.com
+#+DATE:        2019-12-18 
+#+URI:         /blog/org-mode-clojure
+#+KEYWORDS:    clojure, org-mode, plotting
+#+TAGS:        clojure, beginner, org-mode, plotting
+#+LANGUAGE:    en
+#+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: This is going to be examples of how clojure could be used from org-mode.
 
-#+begin_src clojure :results pp
-  [ 1 2 3 4]
-#+end_src
+* Org Clojure 
+
+This is going to be examples of how clojure could be used from org-mode
+
+** Plotting
+ Is this possible to reproduce the case, [[https://stardiviner.github.io/Blog/Clojure-Plotting-to-Org-inline-image-in-ob-clojure.html][described in this article]] ?
+ And add Vega charts to list of demos.
+
+** Incanter
+
+  #+begin_src clojure :results graphics file link :dir "images/" :file "incanter.png" :exports both
+    (use '(incanter core stats datasets charts io))
+    (def hist (histogram (sample-normal 100)))
+    ;; (view hist)
+    (save hist "./images/incanter.png")
+  #+end_src
+
+  #+RESULTS:
+  [[file:images/incanter.png]]
+
+
+** XCharts
+
+#+begin_src clojure :results graphics file link :dir "images/" :file "xchart.png" :exports both
+  (require '[com.hypirion.clj-xchart :as c])
+  (def chart (c/xy-chart
+              {"Memory usage" {:x     (range 0 10 0.5)
+                               :y     [0.0 0.5 2.3 4.5 2.7 4.5 6.7
+                                       9.0 9.3 9.5 6.7 7.5 8.8 10.3
+                                       9.7 11.4 5.6 4.5 5.6 1.2]
+                               :style {:marker-type :none}}
+               "Total memory" {:x     [-100 100]
+                               :y     [12 12]
+                               :style {:render-style :line
+                                       :marker-type  :none
+                                       :line-color   :red}}}
+              {:title        "Memory usage"
+               :render-style :area
+               :x-axis       {:title "Time (min)"
+                              :min   0
+                              :max   10}
+               :y-axis       {:title "Memory (GB)"
+                              :max   15}
+               :legend       {:position :inside-nw}}))
+
+  ;; (c/view chart)
+  (c/spit chart "./images/xchart.png")
+#+END_SRC
 
 #+RESULTS:
-: [1 2 3 4]
+[[file:images/xchart.png]]
 
-#+begin_src clojure :results pp
-  (def small-map {:a 2 :b 4 :c 8})
-  (:b small-map)
-#+end_src
+** Gnuplots
+   - brew install gnuplots
+#+begin_src clojure :results graphics file link :dir "images/" :file "gnuplot.svg" :exports both
+  (require '[gnuplot.core :as g])
+
+  (g/raw-plot!
+   [[:set :title "simple-test" :font ",40"]
+    [:set :style :textbox :opaque :noborder]
+    [:set :boxwidth 1 :abs]
+    [:set :term :svg]
+    [:set :output "./images/gnuplot.svg"]
+    [:plot
+     (g/range :* :*)
+     (g/list ["-" :title "rising" :with :filledcurve :x1]
+             ["-" :title "falling" :with :boxes])]]
+
+   [[[0 0] [1 1] [2 1.5]
+     [3 1] [4 6] [5 4]]
+    [[0 5] [1 4] [2 3]
+     [3 2] [4 1] [5 0]]])
+#+END_SRC
 
 #+RESULTS:
-: 4
+[[file:images/gnuplot.svg]]
 
-#+begin_src clojure
-  (use '(incanter core charts))
-  ;;; Create the x and y data:
-  (def x-data [0.0 1.0 2.0 3.0 4.0 5.0])
-  (def y-data [2.3 2.6 3.1 4.5 9 8])
-  (def xy-line (xy-plot x-data y-data))
-  (view xy-line)
-  ;; (save-pdf xy-line "incanter-xy-line.pdf")
-  (save xy-line "./plots/incanter-xy-line.png")
-#+end_src
+** Vega, Vega lite wrappers
+
+   Oz can view but not possible yet to export to svg programmatically
+   However vega-cli tools could be used to convert Vega spec to any format
+   
+   - install vega globally ~npm i -g vega-cli~
+   - install vega-lite globally ~npm i -g vega-lite~
+   
+#+begin_src clojure :results graphics file link :dir "images/" :file "oz.svg" :exports both
+  (require '[clojure.java.shell :as sh])
+  (require '[clojure.data.json :as json])
+
+  (defn temp-json-file [cnt]
+    (let [tmp-file (java.io.File/createTempFile "vega." ".json")]
+      (.deleteOnExit tmp-file)
+      (with-open [file (clojure.java.io/writer tmp-file)]
+        (json/write cnt file))
+      (.getAbsolutePath tmp-file)))
+
+
+  (require '[oz.core :as oz])
+
+  (oz/start-server!)
+
+  (defn play-data [& names]
+    (for [n names
+          i (range 200)]
+      {:time     i
+       :item     n
+       :quantity (+ (Math/pow (* i (count n)) 0.8) (rand-int (count n)))}))
+
+  (def line-plot
+    {:data     {:values (play-data "monkey" "slipper" "broom")}
+     :encoding {:x     {:field "time" :type "ordinal"}
+                :y     {:field "quantity" :type "quantitative"}
+                :color {:field "item" :type "nominal"}}
+     :width    400
+     :height   400
+     :mark     "line"})
+
+  (sh/sh "vl2svg" (temp-json-file line-plot) "./images/oz.svg")
+
+  (oz/view! line-plot)
+#+END_SRC
 
 #+RESULTS:
-: nil#'user/x-data#'user/y-data#'user/xy-line#object[org.jfree.chart.ChartFrame 0x50e436cc "org.jfree.chart.ChartFrame[frame4,0,23,500x400,layout=java.awt.BorderLayout,title=Incanter Plot,resizable,normal,defaultCloseOperation=DISPOSE_ON_CLOSE,rootPane=javax.swing.JRootPane[,0,22,500x378,layout=javax.swing.JRootPane$RootLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777673,maximumSize=,minimumSize=,preferredSize=],rootPaneCheckingEnabled=true]"]class java.io.FileNotFoundExceptionclass java.io.FileNotFoundExceptionExecution error (FileNotFoundException) at java.io.FileOutputStream/open0 (FileOutputStream.java:-2).
-: ./plots/incanter-xy-line.png (No such file or directory)
+[[file:images/oz.svg]]
+
+Yes it is very possible!
+
+TBD

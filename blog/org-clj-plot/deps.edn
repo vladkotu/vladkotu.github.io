@@ -1,5 +1,10 @@
 {
  :deps
- {incanter/incanter-core   {:mvn/version "1.9.2"}
+ {org.clojure/data.json    {:mvn/version "0.2.7"}
+  incanter/incanter-core   {:mvn/version "1.9.2"}
   incanter/incanter-charts {:mvn/version "1.9.2"}
-  incanter/incanter-io     {:mvn/version "1.9.2"}}}
+  incanter/incanter-io     {:mvn/version "1.9.2"}
+  com.hypirion/clj-xchart  {:mvn/version "0.2.0"}
+  gnuplot                  {:mvn/version "0.1.2"}
+  metasoarous/oz           {:mvn/version "1.6.0-alpha5"}
+  aerial.hanami            {:mvn/version "0.10.12"}}}
