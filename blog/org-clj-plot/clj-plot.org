@@ -99,7 +99,7 @@ This is going to be examples of how clojure could be used from org-mode
   (require '[clojure.data.json :as json])
 
   (defn temp-json-file
-    "helper function to write vega spec to temp file"
+    "helper function convert clj vega spec to json and store it as tmp file"
     [content]
     (let [tmp-file (java.io.File/createTempFile "vega." ".json")]
       (.deleteOnExit tmp-file)
