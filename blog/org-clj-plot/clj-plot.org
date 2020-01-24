@@ -94,21 +94,18 @@ This is going to be examples of how clojure could be used from org-mode
    - install vega globally ~npm i -g vega-cli~
    - install vega-lite globally ~npm i -g vega-lite~
    
-#+begin_src clojure :results graphics file link :dir "images/" :file "oz.svg" :exports both
+#+begin_src clojure :results graphics file link :dir "images/" :file "vega.svg" :exports both
   (require '[clojure.java.shell :as sh])
   (require '[clojure.data.json :as json])
 
-  (defn temp-json-file [cnt]
+  (defn temp-json-file
+    "helper function to write vega spec to temp file"
+    [content]
     (let [tmp-file (java.io.File/createTempFile "vega." ".json")]
       (.deleteOnExit tmp-file)
       (with-open [file (clojure.java.io/writer tmp-file)]
-        (json/write cnt file))
+        (json/write content file))
       (.getAbsolutePath tmp-file)))
-
-
-  (require '[oz.core :as oz])
-
-  (oz/start-server!)
 
   (defn play-data [& names]
     (for [n names
@@ -126,13 +123,11 @@ This is going to be examples of how clojure could be used from org-mode
      :height   400
      :mark     "line"})
 
-  (sh/sh "vl2svg" (temp-json-file line-plot) "./images/oz.svg")
-
-  (oz/view! line-plot)
+  (sh/sh "vl2svg" (temp-json-file line-plot) "./images/vega.svg")
 #+END_SRC
 
 #+RESULTS:
-[[file:images/oz.svg]]
+[[file:images/vega.svg]]
 
 Yes it is very possible!
 
