@@ -2,23 +2,30 @@
 <rss version="2.0">
   <channel>
     <title>Ambient Programming</title>
-    <link>http://vladkotu.github.io/</link>
+    <link>http://vladkotu.github.io</link>
     <description>Clojure reveals true ease</description>
-    <pubDate>Fri, 24 Jan 2020 17:45:32 EET</pubDate>
-    <lastBuildDate>Fri, 24 Jan 2020 17:45:32 EET</lastBuildDate>
+    <pubDate>Sun, 26 Jan 2020 13:20:26 EET</pubDate>
+    <lastBuildDate>Sun, 26 Jan 2020 13:20:26 EET</lastBuildDate>
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Org-page static site generator (https://github.com/kelvinh/org-page)</generator>
     <item>
+      <title>Data munging with SF Bay Area Bike Share</title>
+      <link>http://vladkotu.github.io/blog/strings-and-characters</link>
+      <description><![CDATA[Basic data manipulation using clojure as data science tool]]></description>
+      <pubDate>2020-01-26</pubDate>
+      <guid>http://vladkotu.github.io/blog/strings-and-characters</guid>
+    </item>
+    <item>
       <title>Org-mode and Clojure</title>
       <link>http://vladkotu.github.io/blog/org-mode-clojure</link>
-      <description><![CDATA[This is going to be examples of how clojure could be used from org-mode.]]></description>
+      <description><![CDATA[]]></description>
       <pubDate>2020-01-24</pubDate>
       <guid>http://vladkotu.github.io/blog/org-mode-clojure</guid>
     </item>
     <item>
       <title>Working with string characters in Clojure</title>
       <link>http://vladkotu.github.io/blog/strings-and-characters</link>
-      <description><![CDATA[An exploratory article for beginners, that aims to help grasp basics of strings and characters in clojure.]]></description>
+      <description><![CDATA[]]></description>
       <pubDate>2020-01-24</pubDate>
       <guid>http://vladkotu.github.io/blog/strings-and-characters</guid>
     </item>

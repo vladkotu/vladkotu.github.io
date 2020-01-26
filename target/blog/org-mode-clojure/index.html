@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <title>Org-mode and Clojure - Ambient Programming</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="author" content="Vladimir Kotushenko" />
+    <meta name="description" content="This is going to be examples of how clojure could be used from org-mode." />
+    <meta name="keywords" content="clojure, org-mode, plotting" />
+    <link rel="stylesheet" href="/media/css/main.css" type="text/css">
+    <link rel="stylesheet" type="text/css" href="/media/prism/prism.css">
+    <!-- <link rel="stylesheet" type="text/css" href="/media/google-code-prettify/prettify.css"> -->
+    <!-- <link rel="stylesheet" type="text/css" href="/media/google-code-prettify/skins/sunburst.css"> -->
+    <!-- <script type="text/javascript" src="/media/google-code-prettify/prettify.js"></script> -->
+    <!-- <script type="text/javascript" src="/media/google-code-prettify/lang-clj.js"></script> -->
+
+  </head>
+
+  <body class="container">
+    <div>
+      <header class="masthead">
+        <h1 class="masthead-title"><a href="/">Ambient Programming</a></h1>
+        <p>Clojure reveals true ease</p>
+        <ul>
+          <li><a href="/blog/">Blog</a></li>
+          <li><a href="/target/">Target</a></li>
+          <li><a href="/tags/">Tags</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="https://github.com/vladkotu/">GitHub</a></li>
+          <li><a href="/rss.xml">RSS</a></li>
+        </ul>
+        <!-- <form method="get" id="searchform" action="//www.google.com/search"> -->
+        <!-- <input type="text" class="field" name="q" id="s" placeholder="Search"> -->
+        <!-- <input type="hidden" name="as_sitesearch" value="vladkotu.github.io"> -->
+        <!-- </form> -->
+      </header>
+    </div>
+
+<div>
+<div class="post">
+<h1>Org-mode and Clojure</h1>
+
+<div id="outline-container-orge92a882" class="outline-2">
+<h2 id="orge92a882">Org Clojure</h2>
+<div class="outline-text-2" id="text-orge92a882">
+<p>
+This is going to be examples of how clojure could be used from org-mode
+</p>
+</div>
+
+<div id="outline-container-org635020f" class="outline-3">
+<h3 id="org635020f">Plotting</h3>
+<div class="outline-text-3" id="text-org635020f">
+<p>
+Is this possible to reproduce the case, <a href="https://stardiviner.github.io/Blog/Clojure-Plotting-to-Org-inline-image-in-ob-clojure.html">described in this article</a> ?
+And add Vega charts to list of demos.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org767726f" class="outline-3">
+<h3 id="org767726f">Incanter</h3>
+<div class="outline-text-3" id="text-org767726f">
+<div class="org-src-container">
+<pre class="src src-clojure">(use '(incanter core stats datasets charts io))
+(def hist (histogram (sample-normal 100)))
+;; (view hist)
+(save hist ".//assets/blog/org-mode-clojure/incanter.png")
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="/assets/blog/org-mode-clojure/incanter.png" alt="incanter.png" />
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgce2ad67" class="outline-3">
+<h3 id="orgce2ad67">XCharts</h3>
+<div class="outline-text-3" id="text-orgce2ad67">
+<div class="org-src-container">
+<pre class="src src-clojure">(require '[com.hypirion.clj-xchart :as c])
+(def chart (c/xy-chart
+            {"Memory usage" {:x     (range 0 10 0.5)
+                             :y     [0.0 0.5 2.3 4.5 2.7 4.5 6.7
+                                     9.0 9.3 9.5 6.7 7.5 8.8 10.3
+                                     9.7 11.4 5.6 4.5 5.6 1.2]
+                             :style {:marker-type :none}}
+             "Total memory" {:x     [-100 100]
+                             :y     [12 12]
+                             :style {:render-style :line
+                                     :marker-type  :none
+                                     :line-color   :red}}}
+            {:title        "Memory usage"
+             :render-style :area
+             :x-axis       {:title "Time (min)"
+                            :min   0
+                            :max   10}
+             :y-axis       {:title "Memory (GB)"
+                            :max   15}
+             :legend       {:position :inside-nw}}))
+
+;; (c/view chart)
+(c/spit chart ".//assets/blog/org-mode-clojure/xchart.png")
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="/assets/blog/org-mode-clojure/xchart.png" alt="xchart.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1eeb9e1" class="outline-3">
+<h3 id="org1eeb9e1">Gnuplots</h3>
+<div class="outline-text-3" id="text-org1eeb9e1">
+<ul class="org-ul">
+<li>brew install gnuplots</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-clojure">(require '[gnuplot.core :as g])
+
+(g/raw-plot!
+ [[:set :title "simple-test" :font ",40"]
+  [:set :style :textbox :opaque :noborder]
+  [:set :boxwidth 1 :abs]
+  [:set :term :svg]
+  [:set :output ".//assets/blog/org-mode-clojure/gnuplot.svg"]
+  [:plot
+   (g/range :* :*)
+   (g/list ["-" :title "rising" :with :filledcurve :x1]
+           ["-" :title "falling" :with :boxes])]]
+
+ [[[0 0] [1 1] [2 1.5]
+   [3 1] [4 6] [5 4]]
+  [[0 5] [1 4] [2 3]
+   [3 2] [4 1] [5 0]]])
+</pre>
+</div>
+
+
+<div class="figure">
+<p><object type="image/svg+xml" data="/assets/blog/org-mode-clojure/gnuplot.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org658d6cb" class="outline-3">
+<h3 id="org658d6cb">Vega, Vega lite wrappers</h3>
+<div class="outline-text-3" id="text-org658d6cb">
+<p>
+Oz can view but not possible yet to export to svg programmatically
+However vega-cli tools could be used to convert Vega spec to any format
+</p>
+
+<ul class="org-ul">
+<li>install vega globally <code>npm i -g vega-cli</code></li>
+<li>install vega-lite globally <code>npm i -g vega-lite</code></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-clojure">(require '[clojure.java.shell :as sh])
+(require '[clojure.data.json :as json])
+
+(defn temp-json-file
+  "helper function convert clj vega spec to json and store it as tmp file"
+  [content]
+  (let [tmp-file (java.io.File/createTempFile "vega." ".json")]
+    (.deleteOnExit tmp-file)
+    (with-open [file (clojure.java.io/writer tmp-file)]
+      (json/write content file))
+    (.getAbsolutePath tmp-file)))
+
+(defn play-data [&amp; names]
+  (for [n names
+        i (range 200)]
+    {:time     i
+     :item     n
+     :quantity (+ (Math/pow (* i (count n)) 0.8) (rand-int (count n)))}))
+
+(def line-plot
+  {:data     {:values (play-data "monkey" "slipper" "broom")}
+   :encoding {:x     {:field "time" :type "ordinal"}
+              :y     {:field "quantity" :type "quantitative"}
+              :color {:field "item" :type "nominal"}}
+   :width    400
+   :height   400
+   :mark     "line"})
+
+(sh/sh "vl2svg" (temp-json-file line-plot) ".//assets/blog/org-mode-clojure/vega.svg")
+</pre>
+</div>
+
+
+<div class="figure">
+<p><object type="image/svg+xml" data="/assets/blog/org-mode-clojure/vega.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+
+<p>
+Yes it is very possible!
+</p>
+
+<p>
+[TBD]
+</p>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+    <div>
+      <div class="post-meta">
+        <span title="post date" class="post-info">2019-12-18</span>
+        <span title="last modification date" class="post-info">2020-01-24</span>
+        <span title="tags" class="post-info"><a href="/tags/clojure/">clojure</a>, <a href="/tags/beginner/">beginner</a>, <a href="/tags/org-mode/">org-mode</a>, <a href="/tags/plotting/">plotting</a></span>
+        <span title="author" class="post-info">Vladimir Kotushenko</span>
+      </div>
+      <section>
+        <h1>Comments</h1>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          //var disqus_developer = 1;
+          var disqus_identifier = "/blog/org-mode-clojure";
+          var disqus_url = "http://vladkotu.github.io/blog/org-mode-clojure";
+          var disqus_shortname = 'vladkotu';
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="//disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </section>
+      <script src="//code.jquery.com/jquery-latest.min.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="/media/js/main.js"></script>
+      <script type="text/javascript" src="/media/prism/prism.js"></script>
+      <div class="footer">
+        <p>Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 26.x (<a href="http://orgmode.org">Org mode</a> 9.x)</p>
+        <p>
+          Copyright &copy; 2012 - <span id="footerYear"></span> <a href="mailto:volodymyr &lt;dot&gt; kotushenko &lt;at&gt; gmail &lt;dot&gt; com">Vladimir Kotushenko</a>
+          &nbsp;&nbsp;-&nbsp;&nbsp;
+          Powered by <a href="https://github.com/kelvinh/org-page" target="_blank">org-page</a>
+          <script type="text/javascript">document.getElementById("footerYear").innerHTML = (new Date()).getFullYear();</script>
+        </p>
+      </div>
+    </div>
+
+  </body>
+</html>
