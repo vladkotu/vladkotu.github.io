@@ -1,18 +1,17 @@
-{
- :deps
- {
+{:deps
+ {wiz.lib.data      {:local/root "../../../wiz.lib.data"}
   criterium         {:mvn/version "0.4.5"}
   net.cgrand/xforms {:mvn/version "0.19.2"}
 
   org.clojure/data.csv {:mvn/version "0.1.4"}
   semantic-csv         {:mvn/version "0.2.1-alpha1"}
+  clj-time             {:mvn/version "0.15.2"}
 
   incanter/incanter-core   {:mvn/version "1.9.3"}
   incanter/incanter-charts {:mvn/version "1.9.3"}
   incanter/incanter-io     {:mvn/version "1.9.3"}
   incanter/incanter-svg    {:mvn/version "1.9.3"}
 
-  huri {:mvn/version "0.10.0-SNAPSHOT"}
-
-
-  }}
+  huri               {:mvn/version "0.10.0-SNAPSHOT"}
+  rm-hull/clustering {:mvn/version "0.2.0"}
+  metasoarous/oz     {:mvn/version "1.6.0-alpha5"}}}
