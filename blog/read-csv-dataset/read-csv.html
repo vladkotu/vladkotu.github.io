@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2020-01-25 Sat 22:20 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>&lrm;</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Volodymyr Kotushenko" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgd63d57b">1. Reading CSV files</a>
+<ul>
+<li><a href="#org950b3d1">1.1. Imports and helpers.</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgd63d57b" class="outline-2">
+<h2 id="orgd63d57b"><span class="section-number-2">1</span> Reading CSV files</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-org950b3d1" class="outline-3">
+<h3 id="org950b3d1"><span class="section-number-3">1.1</span> Imports and helpers.</h3>
+<div class="outline-text-3" id="text-1-1">
+<div class="org-src-container">
+<pre class="src src-clojure" id="orge523a43">  <span style="color: #81A1C1;">(</span>require '<span style="color: #B48EAD;">[</span>clojure.java.io<span style="color: #B48EAD;">]</span>
+           '<span style="color: #B48EAD;">[</span>clojure.data.csv<span style="color: #B48EAD;">]</span>
+           '<span style="color: #B48EAD;">[</span>clojure.data.json<span style="color: #B48EAD;">]</span>
+           '<span style="color: #B48EAD;">[</span>clojure.java.shell <span style="color: #B48EAD;">:as</span> sh<span style="color: #B48EAD;">]</span>
+           '<span style="color: #B48EAD;">[</span>semantic-csv.core <span style="color: #B48EAD;">:as</span> sc<span style="color: #B48EAD;">]</span>
+           '<span style="color: #B48EAD;">[</span>semantic-csv.transducers <span style="color: #B48EAD;">:as</span> sct<span style="color: #B48EAD;">]</span>
+           '<span style="color: #B48EAD;">[</span>huri.core <span style="color: #B48EAD;">:as</span> huri<span style="color: #B48EAD;">]</span>
+           '<span style="color: #B48EAD;">[</span>clojure.pprint <span style="color: #B48EAD;">:as</span> pp<span style="color: #B48EAD;">]</span>
+           '<span style="color: #B48EAD;">[</span>net.cgrand.xforms <span style="color: #B48EAD;">:as</span> x<span style="color: #B48EAD;">]</span><span style="color: #81A1C1;">)</span>
+
+<span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">defn</span> <span style="color: #8FBCBB;">dissoc-all</span> <span style="color: #B48EAD;">[</span>m keys<span style="color: #B48EAD;">]</span> <span style="color: #B48EAD;">(</span>reduce #<span style="color: #A3BE8C;">(</span>dissoc <span style="color: #d9c6d6;">%1</span> <span style="color: #d9c6d6;">%2</span><span style="color: #A3BE8C;">)</span> m keys<span style="color: #B48EAD;">)</span><span style="color: #81A1C1;">)</span>
+
+<span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">defn</span> <span style="color: #8FBCBB;">take-last-str</span>
+  <span style="color: #B48EAD;">(</span><span style="color: #A3BE8C;">[</span>n<span style="color: #A3BE8C;">]</span> <span style="color: #A3BE8C;">(</span><span style="color: #81A1C1;">fn</span> <span style="color: #D08770;">[</span>s<span style="color: #D08770;">]</span> <span style="color: #D08770;">(</span>take-last-str n s<span style="color: #D08770;">)</span><span style="color: #A3BE8C;">)</span><span style="color: #B48EAD;">)</span>
+  <span style="color: #B48EAD;">(</span><span style="color: #A3BE8C;">[</span>n s<span style="color: #A3BE8C;">]</span> <span style="color: #A3BE8C;">(</span>apply str <span style="color: #D08770;">(</span>take-last n s<span style="color: #D08770;">)</span><span style="color: #A3BE8C;">)</span><span style="color: #B48EAD;">)</span><span style="color: #81A1C1;">)</span>
+
+<span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">defn</span> <span style="color: #8FBCBB;">size</span> <span style="color: #B48EAD;">[</span>dt<span style="color: #B48EAD;">]</span>
+  <span style="color: #B48EAD;">{</span><span style="color: #B48EAD;">:cols</span> <span style="color: #A3BE8C;">(</span>count <span style="color: #D08770;">(</span>first dt<span style="color: #D08770;">)</span><span style="color: #A3BE8C;">)</span>
+   <span style="color: #B48EAD;">:rows</span> <span style="color: #A3BE8C;">(</span>count dt<span style="color: #A3BE8C;">)</span><span style="color: #B48EAD;">}</span><span style="color: #81A1C1;">)</span>
+
+<span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">defn</span> <span style="color: #8FBCBB;">temp-json-file</span>
+  <span style="color: #78808f;">"helper function convert clj vega spec to json and store it as tmp file"</span>
+  <span style="color: #B48EAD;">[</span>fname content<span style="color: #B48EAD;">]</span>
+  <span style="color: #B48EAD;">(</span><span style="color: #81A1C1;">let</span> <span style="color: #A3BE8C;">[</span>tmp-file <span style="color: #D08770;">(</span><span style="color: #8FBCBB;">java.io.File</span>/createTempFile <span style="color: #A3BE8C;">"tmp."</span> <span style="color: #A3BE8C;">".json"</span><span style="color: #D08770;">)</span><span style="color: #A3BE8C;">]</span>
+    <span style="color: #A3BE8C;">(</span>.deleteOnExit tmp-file<span style="color: #A3BE8C;">)</span>
+    <span style="color: #A3BE8C;">(</span><span style="color: #81A1C1;">with-open</span> <span style="color: #D08770;">[</span>file <span style="color: #5D80AE;">(</span><span style="color: #8FBCBB;">clojure.java.io</span>/writer tmp-file<span style="color: #5D80AE;">)</span><span style="color: #D08770;">]</span>
+      <span style="color: #D08770;">(</span><span style="color: #8FBCBB;">clojure.data.json</span>/write content file<span style="color: #D08770;">)</span><span style="color: #A3BE8C;">)</span>
+    <span style="color: #A3BE8C;">(</span><span style="color: #81A1C1;">let</span> <span style="color: #D08770;">[</span>source <span style="color: #5D80AE;">(</span>.getAbsolutePath tmp-file<span style="color: #5D80AE;">)</span>
+          dest   <span style="color: #5D80AE;">(</span>str <span style="color: #A3BE8C;">"./images/"</span> fname <span style="color: #A3BE8C;">".svg"</span><span style="color: #5D80AE;">)</span><span style="color: #D08770;">]</span>
+      <span style="color: #D08770;">(</span><span style="color: #8FBCBB;">sh</span>/sh <span style="color: #A3BE8C;">"vl2svg"</span> source dest<span style="color: #D08770;">)</span><span style="color: #A3BE8C;">)</span><span style="color: #B48EAD;">)</span><span style="color: #81A1C1;">)</span>
+
+</pre>
+</div>
+
+<p>
+Extract Raw data from csv, and observe first couple rows
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">with-open</span> <span style="color: #B48EAD;">[</span>reader <span style="color: #A3BE8C;">(</span><span style="color: #8FBCBB;">clojure.java.io</span>/reader <span style="color: #A3BE8C;">"./data/station.csv"</span><span style="color: #A3BE8C;">)</span><span style="color: #B48EAD;">]</span>
+  <span style="color: #B48EAD;">(</span><span style="color: #81A1C1;">-&gt;&gt;</span> <span style="color: #A3BE8C;">(</span><span style="color: #8FBCBB;">clojure.data.csv</span>/read-csv reader<span style="color: #A3BE8C;">)</span>
+       <span style="color: #A3BE8C;">(</span>sequence
+        <span style="color: #D08770;">(</span>comp
+         <span style="color: #5D80AE;">(</span><span style="color: #8FBCBB;">sct</span>/remove-comments<span style="color: #5D80AE;">)</span>
+         <span style="color: #5D80AE;">(</span><span style="color: #8FBCBB;">sct</span>/mappify<span style="color: #5D80AE;">)</span><span style="color: #D08770;">)</span><span style="color: #A3BE8C;">)</span>
+       <span style="color: #A3BE8C;">(</span>take <span style="color: #B48EAD;">5</span><span style="color: #A3BE8C;">)</span>
+       <span style="color: #A3BE8C;">(</span><span style="color: #8FBCBB;">pp</span>/print-table<span style="color: #A3BE8C;">)</span><span style="color: #B48EAD;">)</span><span style="color: #81A1C1;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+| :id |                             :name |               :lat |               :long | :dock_count |    :city | :installation_date |
+|-----+-----------------------------------+--------------------+---------------------+-------------+----------+--------------------|
+|   2 | San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 |          27 | San Jose |           8/6/2013 |
+|   3 |             San Jose Civic Center |          37.330698 |         -121.888979 |          15 | San Jose |           8/5/2013 |
+|   4 |            Santa Clara at Almaden |          37.333988 |         -121.894902 |          11 | San Jose |           8/6/2013 |
+|   5 |                  Adobe on Almaden |          37.331415 |           -121.8932 |          19 | San Jose |           8/5/2013 |
+|   6 |                  San Pedro Square | 37.336721000000004 |         -121.894074 |          15 | San Jose |           8/7/2013 |
+</pre>
+
+<p>
+By observing i decided to remove id and coordinates columnns, and left name for reference and others for computations
+</p>
+
+<p>
+Lets remove unwanted columns and transform data:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">def</span> <span style="color: #d9c6d6;">data</span> <span style="color: #B48EAD;">(</span><span style="color: #81A1C1;">with-open</span> <span style="color: #A3BE8C;">[</span>reader <span style="color: #D08770;">(</span><span style="color: #8FBCBB;">clojure.java.io</span>/reader <span style="color: #A3BE8C;">"./data/station.csv"</span><span style="color: #D08770;">)</span><span style="color: #A3BE8C;">]</span>
+            <span style="color: #A3BE8C;">(</span><span style="color: #81A1C1;">-&gt;&gt;</span> <span style="color: #D08770;">(</span><span style="color: #8FBCBB;">clojure.data.csv</span>/read-csv reader<span style="color: #D08770;">)</span>
+                 <span style="color: #D08770;">(</span>sequence
+                  <span style="color: #5D80AE;">(</span>comp
+                   <span style="color: #EBCB8B;">(</span><span style="color: #8FBCBB;">sct</span>/remove-comments<span style="color: #EBCB8B;">)</span>
+                   <span style="color: #EBCB8B;">(</span><span style="color: #8FBCBB;">sct</span>/mappify<span style="color: #EBCB8B;">)</span>
+                   <span style="color: #EBCB8B;">(</span>map #<span style="color: #8FBCBB;">(</span>dissoc-all <span style="color: #d9c6d6;">%</span> <span style="color: #a2b6da;">[</span><span style="color: #B48EAD;">:id</span><span style="color: #a2b6da;">]</span><span style="color: #8FBCBB;">)</span><span style="color: #EBCB8B;">)</span>
+                   <span style="color: #EBCB8B;">(</span>map #<span style="color: #8FBCBB;">(</span><span style="color: #8FBCBB;">clojure.set</span>/rename-keys <span style="color: #d9c6d6;">%</span> <span style="color: #a2b6da;">{</span><span style="color: #B48EAD;">:dock_count</span> <span style="color: #B48EAD;">:docks</span> <span style="color: #B48EAD;">:installation_date</span> <span style="color: #B48EAD;">:year</span><span style="color: #a2b6da;">}</span><span style="color: #8FBCBB;">)</span><span style="color: #EBCB8B;">)</span>
+                   <span style="color: #EBCB8B;">(</span>map #<span style="color: #8FBCBB;">(</span>update <span style="color: #d9c6d6;">%</span> <span style="color: #B48EAD;">:docks</span> <span style="color: #8FBCBB;">sc</span>/-&gt;int<span style="color: #8FBCBB;">)</span><span style="color: #EBCB8B;">)</span>
+                   <span style="color: #EBCB8B;">(</span>map #<span style="color: #8FBCBB;">(</span>update <span style="color: #d9c6d6;">%</span> <span style="color: #B48EAD;">:year</span> <span style="color: #a2b6da;">(</span>comp  <span style="color: #8FBCBB;">sc</span>/-&gt;int <span style="color: #9cb6ad;">(</span>take-last-str <span style="color: #B48EAD;">4</span><span style="color: #9cb6ad;">)</span><span style="color: #a2b6da;">)</span><span style="color: #8FBCBB;">)</span><span style="color: #EBCB8B;">)</span><span style="color: #5D80AE;">)</span><span style="color: #D08770;">)</span>
+                 <span style="color: #D08770;">(</span><span style="color: #81A1C1;">doall</span><span style="color: #D08770;">)</span><span style="color: #A3BE8C;">)</span><span style="color: #B48EAD;">)</span><span style="color: #81A1C1;">)</span>
+
+<span style="color: #81A1C1;">(</span>println <span style="color: #B48EAD;">(</span>size data<span style="color: #B48EAD;">)</span><span style="color: #81A1C1;">)</span>
+<span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">-&gt;&gt;</span> data
+     <span style="color: #B48EAD;">(</span>take <span style="color: #B48EAD;">5</span><span style="color: #B48EAD;">)</span>
+     <span style="color: #B48EAD;">(</span><span style="color: #8FBCBB;">pp</span>/print-table<span style="color: #B48EAD;">)</span><span style="color: #81A1C1;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+{:cols 6, :rows 70}
+
+|                             :name |               :lat |               :long |    :city | :docks | :year |
+|-----------------------------------+--------------------+---------------------+----------+--------+-------|
+| San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 | San Jose |     27 |  2013 |
+|             San Jose Civic Center |          37.330698 |         -121.888979 | San Jose |     15 |  2013 |
+|            Santa Clara at Almaden |          37.333988 |         -121.894902 | San Jose |     11 |  2013 |
+|                  Adobe on Almaden |          37.331415 |           -121.8932 | San Jose |     19 |  2013 |
+|                  San Pedro Square | 37.336721000000004 |         -121.894074 | San Jose |     15 |  2013 |
+nil
+</pre>
+
+<p>
+How many dock station exists in every city?
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure" id="org7503329"><span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">def</span> <span style="color: #d9c6d6;">docks-by-city</span>
+  <span style="color: #B48EAD;">(</span><span style="color: #8FBCBB;">huri</span>/rollup-fuse
+   <span style="color: #B48EAD;">:city</span> <span style="color: #A3BE8C;">{</span><span style="color: #B48EAD;">:stations</span> count
+          <span style="color: #B48EAD;">:docks</span>    <span style="color: #D08770;">[</span><span style="color: #8FBCBB;">huri</span>/sum <span style="color: #B48EAD;">:docks</span><span style="color: #D08770;">]</span><span style="color: #A3BE8C;">}</span> data<span style="color: #B48EAD;">)</span><span style="color: #81A1C1;">)</span>
+
+<span style="color: #81A1C1;">(</span><span style="color: #8FBCBB;">pp</span>/print-table docks-by-city<span style="color: #81A1C1;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+
+| :stations | :docks |         :city |
+|-----------+--------+---------------|
+|         7 |    117 | Mountain View |
+|         5 |     75 |     Palo Alto |
+|         7 |    115 |  Redwood City |
+|        35 |    665 | San Francisco |
+|        16 |    264 |      San Jose |
+nil
+</pre>
+
+<div class="org-src-container">
+<pre class="src src-clojure" id="org654ff83"><span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">def</span> <span style="color: #d9c6d6;">bar-chart</span>
+  <span style="color: #B48EAD;">{</span><span style="color: #B48EAD;">:data</span>     <span style="color: #A3BE8C;">{</span><span style="color: #B48EAD;">:values</span> docks-by-city<span style="color: #A3BE8C;">}</span>
+   <span style="color: #B48EAD;">:encoding</span> <span style="color: #A3BE8C;">{</span><span style="color: #B48EAD;">:x</span> <span style="color: #D08770;">{</span><span style="color: #B48EAD;">:field</span> <span style="color: #A3BE8C;">"docks"</span> <span style="color: #B48EAD;">:type</span> <span style="color: #A3BE8C;">"quantitative"</span>
+                  <span style="color: #B48EAD;">:axis</span>  <span style="color: #5D80AE;">{</span><span style="color: #B48EAD;">:title</span> <span style="color: #A3BE8C;">"Number of stations"</span><span style="color: #5D80AE;">}</span><span style="color: #D08770;">}</span>
+              <span style="color: #B48EAD;">:y</span> <span style="color: #D08770;">{</span><span style="color: #B48EAD;">:field</span> <span style="color: #A3BE8C;">"city"</span> <span style="color: #B48EAD;">:type</span> <span style="color: #A3BE8C;">"ordinal"</span> <span style="color: #B48EAD;">:sort</span> <span style="color: #A3BE8C;">"-x"</span>
+                  <span style="color: #B48EAD;">:axis</span>  <span style="color: #5D80AE;">{</span><span style="color: #B48EAD;">:title</span> <span style="color: #B48EAD;">nil</span><span style="color: #5D80AE;">}</span><span style="color: #D08770;">}</span><span style="color: #A3BE8C;">}</span>
+   <span style="color: #B48EAD;">:mark</span>     <span style="color: #A3BE8C;">"bar"</span><span style="color: #B48EAD;">}</span><span style="color: #81A1C1;">)</span>
+
+<span style="color: #81A1C1;">(</span>temp-json-file <span style="color: #A3BE8C;">"cities"</span> bar-chart<span style="color: #81A1C1;">)</span>
+
+<span style="color: #6f7787;">;; </span><span style="color: #6f7787;">(huri/distribution :city :docks data)</span>
+
+<span style="color: #6f7787;">;; </span><span style="color: #6f7787;">(huri/rollup-fuse :city {:stations count</span>
+<span style="color: #6f7787;">;;                          </span><span style="color: #6f7787;">:distribution #(double ( / (count %) (count data)))} data)</span>
+
+<span style="color: #6f7787;">;; </span><span style="color: #6f7787;">(huri/sum (constantly 1) data)</span>
+
+<span style="color: #6f7787;">;; </span><span style="color: #6f7787;">(huri/safe-divide 70)</span>
+</pre>
+</div>
+
+
+<div class="figure">
+<p><object type="image/svg+xml" data="images/cities.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+
+
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #81A1C1;">(</span><span style="color: #81A1C1;">def</span> <span style="color: #d9c6d6;">bubble-chart</span>
+  <span style="color: #B48EAD;">{</span><span style="color: #B48EAD;">:layer</span>
+   <span style="color: #A3BE8C;">[</span><span style="color: #D08770;">{</span><span style="color: #B48EAD;">:data</span>       <span style="color: #5D80AE;">{</span><span style="color: #B48EAD;">:values</span> data<span style="color: #5D80AE;">}</span>
+     <span style="color: #B48EAD;">:encoding</span>   <span style="color: #5D80AE;">{</span><span style="color: #B48EAD;">:latitude</span>  <span style="color: #EBCB8B;">{</span><span style="color: #B48EAD;">:field</span> <span style="color: #B48EAD;">:lat</span> <span style="color: #B48EAD;">:type</span> <span style="color: #B48EAD;">:quantitative</span>
+                              <span style="color: #B48EAD;">:axis</span>  <span style="color: #8FBCBB;">{</span><span style="color: #B48EAD;">:title</span> <span style="color: #A3BE8C;">"Latitude"</span><span style="color: #8FBCBB;">}</span><span style="color: #EBCB8B;">}</span>
+                  <span style="color: #B48EAD;">:longitude</span> <span style="color: #EBCB8B;">{</span><span style="color: #B48EAD;">:field</span> <span style="color: #B48EAD;">:long</span> <span style="color: #B48EAD;">:type</span> <span style="color: #B48EAD;">:quantitative</span>
+                              <span style="color: #B48EAD;">:axis</span>  <span style="color: #8FBCBB;">{</span><span style="color: #B48EAD;">:title</span> <span style="color: #A3BE8C;">"Longitude"</span><span style="color: #8FBCBB;">}</span><span style="color: #EBCB8B;">}</span>
+                  <span style="color: #B48EAD;">:size</span>      <span style="color: #EBCB8B;">{</span><span style="color: #B48EAD;">:field</span> <span style="color: #B48EAD;">:docks</span> <span style="color: #B48EAD;">:type</span> <span style="color: #B48EAD;">:quantitative</span> <span style="color: #B48EAD;">:title</span> <span style="color: #A3BE8C;">"Dock Stations"</span><span style="color: #EBCB8B;">}</span>
+                  <span style="color: #B48EAD;">:color</span>     <span style="color: #EBCB8B;">{</span><span style="color: #B48EAD;">:field</span> <span style="color: #B48EAD;">:city</span> <span style="color: #B48EAD;">:type</span> <span style="color: #B48EAD;">:nominal</span> <span style="color: #B48EAD;">:title</span> <span style="color: #A3BE8C;">"City"</span><span style="color: #EBCB8B;">}</span><span style="color: #5D80AE;">}</span>
+     <span style="color: #B48EAD;">:mark</span>       <span style="color: #B48EAD;">:point</span>
+     <span style="color: #B48EAD;">:width</span>      <span style="color: #B48EAD;">400</span>
+     <span style="color: #B48EAD;">:height</span>     <span style="color: #B48EAD;">400</span>
+     <span style="color: #B48EAD;">:projection</span> <span style="color: #5D80AE;">{</span><span style="color: #B48EAD;">:type</span> <span style="color: #B48EAD;">:albersUsa</span><span style="color: #5D80AE;">}</span><span style="color: #D08770;">}</span><span style="color: #A3BE8C;">]</span><span style="color: #B48EAD;">}</span><span style="color: #81A1C1;">)</span>
+
+<span style="color: #81A1C1;">(</span>temp-json-file <span style="color: #A3BE8C;">"map"</span> bubble-chart<span style="color: #81A1C1;">)</span>
+
+</pre>
+</div>
+
+
+<div class="figure">
+<p><object type="image/svg+xml" data="images/map.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Volodymyr Kotushenko</p>
+<p class="date">Created: 2020-01-25 Sat 22:20</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
