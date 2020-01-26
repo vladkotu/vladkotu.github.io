@@ -1,0 +1,177 @@
+#+TITLE:       Data munging with SF Bay Area Bike Share
+#+AUTHOR:      Vladimir Kotushenko
+#+EMAIL:       volodymyr.kotushenko@gmail.com
+#+DATE:        2019-11-18 
+#+URI:         /blog/strings-and-characters
+#+KEYWORDS:    clojure, kaggle, dataset, beginner
+#+TAGS:        clojure, kaggle, dataset, beginner
+#+LANGUAGE:    en
+#+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: Basic data manipulation using clojure as data science tool
+
+**** Imports and helpers.   
+ #+NAME: imports
+ #+begin_src clojure :results silent :eval never-export
+     (require '[clojure.java.io]
+              '[clojure.data.csv]
+              '[clojure.data.json]
+              '[clojure.java.shell :as sh]
+              '[semantic-csv.core :as sc]
+              '[semantic-csv.transducers :as sct]
+              '[huri.core :as huri]
+              '[clojure.pprint :as pp]
+              '[net.cgrand.xforms :as x])
+
+   (defn dissoc-all [m keys] (reduce #(dissoc %1 %2) m keys))
+
+   (defn take-last-str
+     ([n] (fn [s] (take-last-str n s)))
+     ([n s] (apply str (take-last n s))))
+
+   (defn size [dt]
+     {:cols (count (first dt))
+      :rows (count dt)})
+
+   (defn temp-json-file
+     "helper function convert clj vega spec to json and store it as tmp file"
+     [fname content]
+     (let [tmp-file (java.io.File/createTempFile "tmp." ".json")]
+       (.deleteOnExit tmp-file)
+       (with-open [file (clojure.java.io/writer tmp-file)]
+         (clojure.data.json/write content file))
+       (let [source (.getAbsolutePath tmp-file)
+             dest   (str "./images/" fname ".svg")]
+         (sh/sh "vl2svg" source dest))))
+
+ #+END_SRC
+
+ 
+***** Extract Raw data from csv, and observe first couple rows
+  #+begin_src clojure :results pp :eval never-export :exports both
+    (with-open [reader (clojure.java.io/reader "./data/station.csv")]
+      (->> (clojure.data.csv/read-csv reader)
+           (sequence
+            (comp
+             (sct/remove-comments)
+             (sct/mappify)))
+           (take 5)
+           (pp/print-table)))
+  #+END_SRC
+
+  #+RESULTS:
+  : 
+  : | :id |                             :name |               :lat |               :long | :dock_count |    :city | :installation_date |
+  : |-----+-----------------------------------+--------------------+---------------------+-------------+----------+--------------------|
+  : |   2 | San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 |          27 | San Jose |           8/6/2013 |
+  : |   3 |             San Jose Civic Center |          37.330698 |         -121.888979 |          15 | San Jose |           8/5/2013 |
+  : |   4 |            Santa Clara at Almaden |          37.333988 |         -121.894902 |          11 | San Jose |           8/6/2013 |
+  : |   5 |                  Adobe on Almaden |          37.331415 |           -121.8932 |          19 | San Jose |           8/5/2013 |
+  : |   6 |                  San Pedro Square | 37.336721000000004 |         -121.894074 |          15 | San Jose |           8/7/2013 |
+  : nil
+
+ 
+***** Lets remove unwanted columns and transform data:
+  #+begin_src clojure :results pp :eval never-export :exports both
+    (def data (with-open [reader (clojure.java.io/reader "./data/station.csv")]
+                (->> (clojure.data.csv/read-csv reader)
+                     (sequence
+                      (comp
+                       (sct/remove-comments)
+                       (sct/mappify)
+                       (map #(dissoc-all % [:id]))
+                       (map #(clojure.set/rename-keys % {:dock_count :docks :installation_date :year}))
+                       (map #(update % :docks sc/->int))
+                       (map #(update % :year (comp  sc/->int (take-last-str 4))))))
+                     (doall))))
+
+    (println (size data))
+    (->> data
+         (take 5)
+         (pp/print-table))
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  {:cols 6, :rows 70}
+
+  |                             :name |               :lat |               :long |    :city | :docks | :year |
+  |-----------------------------------+--------------------+---------------------+----------+--------+-------|
+  | San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 | San Jose |     27 |  2013 |
+  |             San Jose Civic Center |          37.330698 |         -121.888979 | San Jose |     15 |  2013 |
+  |            Santa Clara at Almaden |          37.333988 |         -121.894902 | San Jose |     11 |  2013 |
+  |                  Adobe on Almaden |          37.331415 |           -121.8932 | San Jose |     19 |  2013 |
+  |                  San Pedro Square | 37.336721000000004 |         -121.894074 | San Jose |     15 |  2013 |
+  nil
+  #+end_example
+
+  How many dock station exists in every city?
+  #+NAME: cities
+  #+begin_src clojure :results pp :exports both :eval never-export
+    (def docks-by-city
+      (huri/rollup-fuse
+       :city {:stations     count
+              :docks        [huri/sum :docks]
+              :docks-extent [huri/extent :docks]
+              :year-extent  [huri/extent :year]} data))
+
+    (pp/print-table docks-by-city)
+  #+END_SRC
+
+  #+RESULTS: cities
+  : 
+  : | :stations | :docks | :docks-extent | :year-extent |         :city |
+  : |-----------+--------+---------------+--------------+---------------|
+  : |         7 |    117 |       [11 23] |  [2013 2013] | Mountain View |
+  : |         5 |     75 |       [11 23] |  [2013 2013] |     Palo Alto |
+  : |         7 |    115 |       [15 25] |  [2013 2014] |  Redwood City |
+  : |        35 |    665 |       [15 27] |  [2013 2014] | San Francisco |
+  : |        16 |    264 |       [11 27] |  [2013 2014] |      San Jose |
+  : nil
+
+  #+NAME: cities-bar-chart
+  #+begin_src clojure :results graphics file link :dir "images/" :file "cities.svg" :exports both :eval never-export
+    (def bar-chart
+      {:data     {:values docks-by-city}
+       :encoding {:x {:field "docks" :type "quantitative"
+                      :axis  {:title "Number of stations"}}
+                  :y {:field "city" :type "ordinal" :sort "-x"
+                      :axis  {:title nil}}}
+       :mark     "bar"})
+
+    (temp-json-file "cities" bar-chart)
+  #+END_SRC
+
+  #+RESULTS: cities-bar-chart
+  [[file:images/cities.svg]]
+
+                
+  #+begin_src clojure :results graphics file link :dir "images/" :file "map.svg" :exports both :eval never-export
+    (require '[huri.io])
+    (def geojson (huri.io/slurp-json "./data/san-francisco.geojson"))
+
+    (def bubble-chart
+      {:layer
+       [{:data       {:values  geojson
+                      :format {:propery :features}}
+         :mark       {:type   :geoshape
+                      :fill   "#eee"
+                      :stroke "#fff"}
+         :width      100
+         :height     100
+         :projection {:type :mercator}}
+
+        {:data       {:values (->> data (huri/where {:city "San Francisco"}))}
+         :encoding   {:latitude  {:field :lat :type :quantitative}
+                      :longitude {:field :long :type :quantitative}
+                      :color     {:field :city :type :nominal :title "City"}}
+         :mark       :point
+         :width      100
+         :height     100
+         :projection {:type :mercator}}]})
+
+    (temp-json-file "map" bubble-chart)
+
+  #+END_SRC
+
+  #+RESULTS:
+  [[file:images/map.svg]]
