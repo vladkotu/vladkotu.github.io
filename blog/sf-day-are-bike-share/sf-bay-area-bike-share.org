@@ -12,6 +12,7 @@
 **** Lib imports and helpers.   
  #+NAME: imports
  #+begin_src clojure :results silent :eval never-export
+<<<<<<< HEAD
    (use '[wiz.lib.data] :reload)
    (require
     '[clojure.java.io]
@@ -26,6 +27,40 @@
     '[huri.io]
     '[oz.core]
     '[clustering.core.qt :as qt])
+=======
+     (require '[clojure.java.io]
+              '[clojure.data.csv]
+              '[clojure.data.json]
+              '[clojure.java.shell :as sh]
+              '[semantic-csv.core :as sc]
+              '[semantic-csv.transducers :as sct]
+              '[huri.core :as huri]
+              '[clojure.pprint :as pp]
+              '[net.cgrand.xforms :as x])
+
+   (defn dissoc-all [m keys] (reduce #(dissoc %1 %2) m keys))
+   (defn update-all [m keys f] (reduce #(update %1 %2 f) m keys))
+   ;; (update-all {:a 1 :b 2} [:a :b] inc)
+
+   (defn take-last-str
+     ([n] (fn [s] (take-last-str n s)))
+     ([n s] (apply str (take-last n s))))
+
+   (defn size [dt]
+     {:cols (count (first dt))
+      :rows (count dt)})
+
+   (defn export-vega-csv
+     "helper function convert clj vega spec to json and store it as tmp file"
+     [fname content]
+     (let [tmp-file (java.io.File/createTempFile "tmp." ".json")]
+       (.deleteOnExit tmp-file)
+       (with-open [writer (clojure.java.io/writer tmp-file)]
+         (clojure.data.json/write content writer))
+       (let [source (.getAbsolutePath tmp-file)
+             dest   (str "./images/" fname ".svg")]
+         (sh/sh "vl2svg" source dest))))
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
  #+END_SRC
 
 **** Look at 'stations.scv' dataset
@@ -33,14 +68,22 @@
 Extract Raw data from csv, and observe first couple rows
 
 #+begin_src clojure :results pp :eval never-export :exports both
+<<<<<<< HEAD
   (def stations-csv-path  "./data/station.csv")
   (println (:out (sh/sh "du" "-h" stations-csv-path)))
+=======
+    (def stations-csv-path  "./data/station.csv")
+    (println (:out (sh/sh "du" "-h" stations-csv-path)))
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 #+end_src 
 
 #+RESULTS:
 : 8.0K	./data/station.csv
 : 
+<<<<<<< HEAD
 : nil
+=======
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 
 Read and parse './data/station.csv'
 #+begin_src clojure :results pp :eval never-export :exports both
@@ -50,14 +93,24 @@ Read and parse './data/station.csv'
        (->> (clojure.data.csv/read-csv reader)
             (sequence (comp (sct/remove-comments)
                             (sct/mappify)
+<<<<<<< HEAD
                             (map #(clojure.set/rename-keys % {:dock_count :docks :installation_date :year}))
                             (map #(update-all % [:id :docks] sc/->int))
+=======
+                            (map #(dissoc-all % [:id]))
+                            (map #(clojure.set/rename-keys % {:dock_count :docks :installation_date :year}))
+                            (map #(update % :docks sc/->int))
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
                             (map #(update % :year (comp  sc/->int (take-last-str 4))))))
             (doall)))))
 #+END_SRC
 
 #+RESULTS:
+<<<<<<< HEAD
 : "Elapsed time: 4.910676 msecs"
+=======
+: "Elapsed time: 3.257472 msecs"
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 : #'user/stations-data
 
 Size of dataset
@@ -65,7 +118,11 @@ Size of dataset
   (size stations-data)
 #+end_src
 #+RESULTS:
+<<<<<<< HEAD
 : {:cols 7, :rows 70}
+=======
+: {:cols 6, :rows 70}
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 
 What columns are exists?
 #+begin_src clojure :results pp :eval never-export :exports both
@@ -73,7 +130,11 @@ What columns are exists?
 #+end_src
 
 #+RESULTS:
+<<<<<<< HEAD
 : (:id :name :lat :long :city :docks :year)
+=======
+: (:name :lat :long :city :docks :year)
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 
 Preview head of table:
 #+begin_src clojure :results pp :eval never-export :exports both
@@ -84,6 +145,7 @@ Preview head of table:
 
 #+RESULTS:
 : 
+<<<<<<< HEAD
 : | :id |                             :name |               :lat |               :long |    :city | :docks | :year |
 : |-----+-----------------------------------+--------------------+---------------------+----------+--------+-------|
 : |   2 | San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 | San Jose |     27 |  2013 |
@@ -91,6 +153,15 @@ Preview head of table:
 : |   4 |            Santa Clara at Almaden |          37.333988 |         -121.894902 | San Jose |     11 |  2013 |
 : |   5 |                  Adobe on Almaden |          37.331415 |           -121.8932 | San Jose |     19 |  2013 |
 : |   6 |                  San Pedro Square | 37.336721000000004 |         -121.894074 | San Jose |     15 |  2013 |
+=======
+: |                             :name |               :lat |               :long |    :city | :docks | :year |
+: |-----------------------------------+--------------------+---------------------+----------+--------+-------|
+: | San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 | San Jose |     27 |  2013 |
+: |             San Jose Civic Center |          37.330698 |         -121.888979 | San Jose |     15 |  2013 |
+: |            Santa Clara at Almaden |          37.333988 |         -121.894902 | San Jose |     11 |  2013 |
+: |                  Adobe on Almaden |          37.331415 |           -121.8932 | San Jose |     19 |  2013 |
+: |                  San Pedro Square | 37.336721000000004 |         -121.894074 | San Jose |     15 |  2013 |
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 : nil
 
   Set of questions taht could be targeted on that dataset:
@@ -133,7 +204,11 @@ Preview head of table:
         :width    300
         :mark     "bar"})
 
+<<<<<<< HEAD
     (vega->svg "cities" bar-chart)
+=======
+    (export-vega-csv "cities" bar-chart)
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
   #+END_SRC
 
   #+RESULTS: cities-bar-chart
@@ -165,7 +240,11 @@ Preview head of table:
                      :color     {:field :city :type :nominal :title "City"}}
           :mark     :point}])})
 
+<<<<<<< HEAD
     (vega->svg "map" bubble-chart)
+=======
+    (export-vega-csv "map" bubble-chart)
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
   #+END_SRC
 
   #+RESULTS:
@@ -184,6 +263,15 @@ Preview head of table:
 
 Read and parse 'trip.csv'
 #+begin_src clojure :results pp :eval never-export :exports both
+<<<<<<< HEAD
+=======
+  (defn ->keyw [s]
+    (keyword (-> s
+                 clojure.string/lower-case
+                 clojure.string/trim
+                 (clojure.string/replace #"\s+" "_"))))
+
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
   (def trips-data
     (time
      (with-open [reader (clojure.java.io/reader trip-csv-path)]
@@ -192,7 +280,11 @@ Read and parse 'trip.csv'
              (comp
               (sct/remove-comments)
               (sct/mappify)
+<<<<<<< HEAD
               ;; (map #(dissoc-all % [:id :zip_code :end_date :start_date]))
+=======
+              (map #(dissoc-all % [:id :zip-code :end_date :start_date]))
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
               (map #(update-all % [:duration :start_station_id
                                    :id :bike_id :end_station_id] sc/->int))
               (map #(update % :subscription_type ->keyw))))
@@ -200,10 +292,17 @@ Read and parse 'trip.csv'
 #+END_SRC
 
   #+RESULTS:
+<<<<<<< HEAD
   : "Elapsed time: 8583.398375 msecs"
   : #'user/trips-data
 
   Size of dataset and columns:
+=======
+  : "Elapsed time: 6879.170081 msecs"
+  : #'user/trips-data
+
+  Size of datasets and columns:
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 #+begin_src clojure :results pp :eval never-export :exports both
   (println (size trips-data))
   (huri/cols trips-data)
@@ -211,29 +310,45 @@ Read and parse 'trip.csv'
 
 #+RESULTS:
 #+begin_example
+<<<<<<< HEAD
 {:cols 11, :rows 669959}
+=======
+{:cols 9, :rows 669959}
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 (:zip_code
  :start_station_name
  :end_station_name
  :duration
  :start_station_id
+<<<<<<< HEAD
  :end_date
  :start_date
+=======
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
  :id
  :bike_id
  :end_station_id
  :subscription_type)
 #+end_example
 
+<<<<<<< HEAD
 Head of dataset
 #+begin_src clojure :results pp :eval never-export :exports both
   (->> trips-data
        (sample 5)
        (pp/print-table))
+=======
+  Head of dataset
+#+begin_src clojure :results pp :eval never-export :exports both
+(->> trips-data
+     (take 5)
+     (pp/print-table))
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
 #+end_src
 
 #+RESULTS:
 : 
+<<<<<<< HEAD
 : | :zip_code |                      :start_station_name |                       :end_station_name | :duration | :start_station_id |        :end_date |      :start_date |    :id | :bike_id | :end_station_id | :subscription_type |
 : |-----------+------------------------------------------+-----------------------------------------+-----------+-------------------+------------------+------------------+--------+----------+-----------------+--------------------|
 : |     94041 |                   Embarcadero at Vallejo |                  Embarcadero at Sansome |      1411 |                48 |   7/4/2015 14:59 |   7/4/2015 14:35 | 833220 |      415 |              60 |          :customer |
@@ -346,3 +461,13 @@ Duration of ride:
 #+end_src
 
 
+=======
+: | :zip_code |      :start_station_name |        :end_station_name | :duration | :start_station_id | :id | :bike_id | :end_station_id | :subscription_type |
+: |-----------+--------------------------+--------------------------+-----------+-------------------+-----+----------+-----------------+--------------------|
+: |     94127 | South Van Ness at Market | South Van Ness at Market |        63 |                66 |     |      520 |              66 |        :subscriber |
+: |     95138 |       San Jose City Hall |       San Jose City Hall |        70 |                10 |     |      661 |              10 |        :subscriber |
+: |     97214 |  Mountain View City Hall |  Mountain View City Hall |        71 |                27 |     |       48 |              27 |        :subscriber |
+: |     95060 |       San Jose City Hall |       San Jose City Hall |        77 |                10 |     |       26 |              10 |        :subscriber |
+: |     94103 | South Van Ness at Market |           Market at 10th |        83 |                66 |     |      319 |              67 |        :subscriber |
+: nil
+>>>>>>> 1f834bb09f753d4dffec902480e5b819e69cdf09
