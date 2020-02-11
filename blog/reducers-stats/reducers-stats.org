@@ -1,0 +1,113 @@
+#+TITLE:       Using clojure reducers to calculate basic statistics on feature
+#+AUTHOR:      Vladimir Kotushenko
+#+EMAIL:       volodymyr.kotushenko@gmail.com
+#+DATE:        2020-01-28 
+#+URI:         /blog/clojure-reducers-statistics
+#+KEYWORDS:    clojure, statistics, reducers
+#+TAGS:        clojure, statistics, reducers
+#+LANGUAGE:    en
+#+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: Using clojure reducers to calculate basic statistics on feature
+
+Compare mean calculation on artificial random numbers
+Than repeat on relatively big kaggle dataset
+
+#+NAME: imports
+#+begin_src clojure :results silent :eval never-export :exports both
+  (require '[criterium.core :as crit])
+
+  (defn benchmark [fs]
+    (doseq [f fs]
+      (let [result (crit/quick-benchmark* f {})]
+        (crit/report-point-estimate (str f) (:mean result)))))
+#+end_src
+
+#+begin_src clojure :results pp :eval never-export :exports both
+  (defn mean [coll]
+    (let [count (count coll)]
+      (/ (apply + coll) count)))
+
+  (require '[clojure.core.reducers :as r])
+
+  (defn r-mean [coll]
+    (let [count (count coll)]
+      (/ (r/fold + coll) count)))
+
+  (def sample (->> #(rand-int 100)
+                   (repeatedly (long 10E6))))
+
+  (def bench-mean (partial mean sample))
+  (def bench-r-mean (partial r-mean (vec sample)))
+
+  ;; 1E6
+  ;; #'user/bench-mean : 123.082471 ms
+  ;; #'user/bench-r-mean : 6.434348 ms
+
+  (benchmark [#'bench-mean #'bench-r-mean])
+
+
+#+end_src
+
+#+begin_src clojure :results pp :eval never-export :exports both
+  (defn mode [coll]
+    (->> coll
+         frequencies
+         seq
+         (sort-by second >)
+         (ffirst)))
+#+end_src
+
+#+NAME: first
+#+begin_src clojure :results pp :eval never-export :exports both
+  (require '[criterium.core :as crit])
+  (def size 100000000)
+  (def sample (->> #(rand-int 100)
+                   (repeatedly size)
+                   (vec)))
+
+  (defn rand-mess [coll]
+    (->> coll
+         (map inc)
+         (filter odd?)
+         (map (partial + 5))
+         (frequencies)
+         (doall)))
+
+  (require '[clojure.core.reducers :as r])
+
+  (defn count-words
+    ([] {})
+    ([r] r)
+    ([freqs word]
+     (assoc freqs word (inc (get freqs word 0)))))
+
+  (defn merge-counts
+    ([] {})
+    ([& m] (apply merge-with + m)))
+
+  (defn red-mess [coll]
+    (->> coll
+         (r/map inc)
+         (r/filter odd?)
+         (r/map (partial + 5))
+         (r/fold merge-counts count-words)))
+
+  (defn trans-mess [coll]
+    (transduce (comp
+                (map inc)
+                (filter odd?)
+                (map (partial + 5)))
+               count-words
+               {} coll))
+
+  (defn benchmark [f m]
+    (println (format "Res for '%s' running on sample size %d"
+                     (str f)
+                     (count m)))
+    (crit/report-result (crit/quick-benchmark (f m) {})))
+
+  (benchmark #'rand-mess sample)
+
+  (benchmark #'red-mess sample)
+  (benchmark #'trans-mess sample)
+#+end_src
