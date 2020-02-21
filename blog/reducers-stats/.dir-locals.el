@@ -1,2 +1,2 @@
-((nil . ((cider-clojure-cli-global-options . "-A:bench:deps:rebl-8")
+((nil . ((cider-clojure-cli-global-options . "-A:max-mem")
          (nrepl-log-messages false))))

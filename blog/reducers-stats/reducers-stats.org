@@ -1,113 +1,139 @@
-#+TITLE:       Using clojure reducers to calculate basic statistics on feature
+#+TITLE:       Calculate statistical attributes, using Clojure reducers
 #+AUTHOR:      Vladimir Kotushenko
 #+EMAIL:       volodymyr.kotushenko@gmail.com
 #+DATE:        2020-01-28 
 #+URI:         /blog/clojure-reducers-statistics
-#+KEYWORDS:    clojure, statistics, reducers
-#+TAGS:        clojure, statistics, reducers
+#+KEYWORDS:    clojure, statistics, reducers, short
+#+TAGS:        clojure, statistics, reducers, short
 #+LANGUAGE:    en
 #+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
-#+DESCRIPTION: Using clojure reducers to calculate basic statistics on feature
+#+DESCRIPTION: Calculate mean value, using Clojure reducers
 
-Compare mean calculation on artificial random numbers
-Than repeat on relatively big kaggle dataset
+Very short performance comparison of min, max and mean calculation on random
+Numbers collection, using built-in Clojure functions vs reducers library.
 
-#+NAME: imports
+ Sample data. Up to 10 millions random numbers from 0 to 1000 in Lazy Seq and Persistent Vector collections:
+ #+begin_src clojure :results silent :eval never-export :exports both
+   (defn make-sample [n]
+     (->> #(rand-int 1000)
+          (repeatedly n)))
+
+   (def sample (make-sample 1000))
+ #+end_src
+
+** Calculate arithmetical average
+  
+*** Using built-in reduce function
+  #+begin_src clojure :results pp :eval never-export :exports both
+    (def stats-defaults {:max Double/NEGATIVE_INFINITY
+                         :min Double/POSITIVE_INFINITY
+                         :sum 0})
+
+    (defn stats-reducer [acc x]
+      (cond-> acc
+        (< x (:min acc)) (assoc :min x)
+        (> x (:max acc)) (assoc :max x)
+        :always          (update :sum #(+ x %))))
+
+    (defn accumulator [coll]
+      (reduce stats-reducer stats-defaults coll))
+
+    (defn stats [accumulate coll]
+      (let [{:keys [sum] :as stats'} (accumulate coll)]
+        (-> stats'
+            (assoc :mean (double (/ sum (count coll))))
+            (dissoc :sum))))
+
+    (stats accumulator sample)
+  #+end_src
+
+  #+RESULTS:
+  : {:max 999, :min 2, :mean 496.248}
+
+*** Using clojure.core.reducers/fold
+
+  #+begin_src clojure :results pp :eval never-export :exports both
+    (require '[clojure.core.reducers :as r])
+
+    (defn stats-combiner
+      ([] stats-defaults)
+      ([a b] {:min (min (:min a) (:min b))
+              :max (max (:max a) (:max b))
+              :sum (+' (:sum a) (:sum b))}))
+
+    (defn foldable-accumulator [coll]
+      (r/fold stats-combiner
+              stats-reducer
+              coll))
+
+    (stats foldable-accumulator (vec sample))
+  #+end_src
+
+  #+RESULTS:
+  : {:min 2, :max 999, :mean 496.248}
+
+** Benchmark
+ Here is benchmark function based on [[https://github.com/hugoduncan/criterium][criterium]] library
+ #+begin_src clojure :results silent :eval never-export :exports both
+      (require '[criterium.core :as crit])
+
+   (defn serial-reduce [coll] (stats accumulator coll))
+   (defn parallel-fold [coll] (stats foldable-accumulator coll))
+
+   (defn bench [f a]
+     ;; (let [result (crit/with-progress-reporting (crit/quick-benchmark* #(f a) {}))])
+     (println "bench " f a)
+     (Thread/sleep 1000)
+     (println "bench " f a)
+     {:fname (-> f meta :name)
+      :count (count a)
+      :mean  nil #_(long (* 1e9 (first (:mean result))))})
+
+   (defn foo [s])
+
+   (bench #'foo [])
+
+   (def bresults
+     (->> (for [step [1 2 3] #_[1e2 1e3 1e4 1e5 1e6 1e7 1e8 1e9]]
+            (for [[f wrap] [[#'serial-reduce doall]
+                            [#'parallel-fold vec]]]
+              (bench f (wrap (make-sample (long step))))))
+          (mapcat doall)))
+
+   (def low-benchmark-results
+     (let [coll (doall (map make-sample [1e2 1e3 1e4 1e5 1e6]))]
+       (doall
+        (concat (bench #'serial-reduce coll)
+                (bench #'parallel-fold (vec coll))))))
+
+   (def high-benchmark-results
+     (concat
+      (for [[f make-data] [[#'serial-reduce #(doall (make-sample %))]
+                           [#'parallel-fold #(vec ())]]]
+        (for [coll (map make-sample [1e7 1e8 1e9])]
+          (doall
+           (concat (bench #'serial-reduce coll)
+                   (bench #'parallel-fold (vec coll))))))))
+ #+end_src
+
 #+begin_src clojure :results silent :eval never-export :exports both
-  (require '[criterium.core :as crit])
+        (require '[wiz.lib.data :refer [vega->svg]])
 
-  (defn benchmark [fs]
-    (doseq [f fs]
-      (let [result (crit/quick-benchmark* f {})]
-        (crit/report-point-estimate (str f) (:mean result)))))
+  (defn plot [name data]
+    (vega->svg
+     name
+     {:data {:values data}
+      :mark {:type :line :point true}
+      :encoding
+      {:x     {:field :count :type :quantitative
+               :scale {:type :log}}
+       :y     {:field :mean  :type :quantitative
+               :scale {:type :log}}
+       :color {:field :fname :type :nominal}}}))
+
+  (plot "low-count" low-benchmark-results)
+  (plot "high-count" high-benchmark-results)
 #+end_src
 
-#+begin_src clojure :results pp :eval never-export :exports both
-  (defn mean [coll]
-    (let [count (count coll)]
-      (/ (apply + coll) count)))
-
-  (require '[clojure.core.reducers :as r])
-
-  (defn r-mean [coll]
-    (let [count (count coll)]
-      (/ (r/fold + coll) count)))
-
-  (def sample (->> #(rand-int 100)
-                   (repeatedly (long 10E6))))
-
-  (def bench-mean (partial mean sample))
-  (def bench-r-mean (partial r-mean (vec sample)))
-
-  ;; 1E6
-  ;; #'user/bench-mean : 123.082471 ms
-  ;; #'user/bench-r-mean : 6.434348 ms
-
-  (benchmark [#'bench-mean #'bench-r-mean])
-
-
-#+end_src
-
-#+begin_src clojure :results pp :eval never-export :exports both
-  (defn mode [coll]
-    (->> coll
-         frequencies
-         seq
-         (sort-by second >)
-         (ffirst)))
-#+end_src
-
-#+NAME: first
-#+begin_src clojure :results pp :eval never-export :exports both
-  (require '[criterium.core :as crit])
-  (def size 100000000)
-  (def sample (->> #(rand-int 100)
-                   (repeatedly size)
-                   (vec)))
-
-  (defn rand-mess [coll]
-    (->> coll
-         (map inc)
-         (filter odd?)
-         (map (partial + 5))
-         (frequencies)
-         (doall)))
-
-  (require '[clojure.core.reducers :as r])
-
-  (defn count-words
-    ([] {})
-    ([r] r)
-    ([freqs word]
-     (assoc freqs word (inc (get freqs word 0)))))
-
-  (defn merge-counts
-    ([] {})
-    ([& m] (apply merge-with + m)))
-
-  (defn red-mess [coll]
-    (->> coll
-         (r/map inc)
-         (r/filter odd?)
-         (r/map (partial + 5))
-         (r/fold merge-counts count-words)))
-
-  (defn trans-mess [coll]
-    (transduce (comp
-                (map inc)
-                (filter odd?)
-                (map (partial + 5)))
-               count-words
-               {} coll))
-
-  (defn benchmark [f m]
-    (println (format "Res for '%s' running on sample size %d"
-                     (str f)
-                     (count m)))
-    (crit/report-result (crit/quick-benchmark (f m) {})))
-
-  (benchmark #'rand-mess sample)
-
-  (benchmark #'red-mess sample)
-  (benchmark #'trans-mess sample)
-#+end_src
+#+RESULTS:
+[[file:images/benchmark.svg]]
