@@ -1,6 +1,4 @@
 {:paths ["./"]
  :deps  {wiz.lib.data {:local/root "../../../wiz.lib.data"}}
  :aliases
- {:max-mem {:jvm-opts ["-Dclojure.compiler.direct-linking=true"
-                       "-Xmx7g" "-Xms7g"]
-            }}}
+ {:max-mem {:jvm-opts ["-Xmx8g" "-Xms8g"]}}}
