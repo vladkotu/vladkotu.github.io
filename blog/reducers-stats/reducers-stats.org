@@ -48,7 +48,7 @@ Numbers collection, using built-in Clojure functions vs reducers library.
   #+end_src
 
   #+RESULTS:
-  : {:max 999, :min 2, :mean 496.248}
+  : {:max 999, :min 1, :mean 491.248}
 
 *** Using clojure.core.reducers/fold
 
@@ -70,70 +70,73 @@ Numbers collection, using built-in Clojure functions vs reducers library.
   #+end_src
 
   #+RESULTS:
-  : {:min 2, :max 999, :mean 496.248}
+  : {:min 1, :max 999, :mean 491.248}
 
 ** Benchmark
  Here is benchmark function based on [[https://github.com/hugoduncan/criterium][criterium]] library
  #+begin_src clojure :results silent :eval never-export :exports both
-      (require '[criterium.core :as crit])
+   (require '[criterium.core :as crit])
 
    (defn serial-reduce [coll] (stats accumulator coll))
    (defn parallel-fold [coll] (stats foldable-accumulator coll))
 
    (defn bench [f a]
-     ;; (let [result (crit/with-progress-reporting (crit/quick-benchmark* #(f a) {}))])
-     (println "bench " f a)
-     (Thread/sleep 1000)
-     (println "bench " f a)
-     {:fname (-> f meta :name)
-      :count (count a)
-      :mean  nil #_(long (* 1e9 (first (:mean result))))})
-
-   (defn foo [s])
-
-   (bench #'foo [])
+     (let [result (crit/with-progress-reporting
+                    (crit/quick-benchmark* #(f a) {}))]
+       (crit/report-point-estimate (str (-> f meta :name)) (:mean result))
+       {:fname (-> f meta :name)
+        :count (count a)
+        :mean  (long (* 1e9 (first (:mean result))))}))
 
    (def bresults
-     (->> (for [step [1 2 3] #_[1e2 1e3 1e4 1e5 1e6 1e7 1e8 1e9]]
-            (for [[f wrap] [[#'serial-reduce doall]
+     (->> (for [step [1e2 1e3 1e4 1e5 1e6 1e7 2e7 3e7 4e7]]
+            (for [[f wrap] [[#'serial-reduce identity]
                             [#'parallel-fold vec]]]
               (bench f (wrap (make-sample (long step))))))
           (mapcat doall)))
+#+end_src
 
-   (def low-benchmark-results
-     (let [coll (doall (map make-sample [1e2 1e3 1e4 1e5 1e6]))]
-       (doall
-        (concat (bench #'serial-reduce coll)
-                (bench #'parallel-fold (vec coll))))))
-
-   (def high-benchmark-results
-     (concat
-      (for [[f make-data] [[#'serial-reduce #(doall (make-sample %))]
-                           [#'parallel-fold #(vec ())]]]
-        (for [coll (map make-sample [1e7 1e8 1e9])]
-          (doall
-           (concat (bench #'serial-reduce coll)
-                   (bench #'parallel-fold (vec coll))))))))
- #+end_src
-
-#+begin_src clojure :results silent :eval never-export :exports both
-        (require '[wiz.lib.data :refer [vega->svg]])
+#+begin_src clojure :results graphics file link :dir "./images" :file "benchmark.svg" :exports both :eval never-export
+  (require '[wiz.lib.data :refer [vega->svg]])
 
   (defn plot [name data]
     (vega->svg
      name
      {:data {:values data}
-      :mark {:type :line :point true}
+      :mark {:type :line}
       :encoding
-      {:x     {:field :count :type :quantitative
-               :scale {:type :log}}
-       :y     {:field :mean  :type :quantitative
-               :scale {:type :log}}
+      {:x     {:field :count :type :quantitative}
+       :y     {:field :mean  :type :quantitative}
        :color {:field :fname :type :nominal}}}))
 
-  (plot "low-count" low-benchmark-results)
-  (plot "high-count" high-benchmark-results)
+  (plot "benchmark" bresults)
 #+end_src
 
 #+RESULTS:
 [[file:images/benchmark.svg]]
+
+#+begin_src clojure :results graphics file link :dir "./images" :file "rate-of-improvement.svg" :exports both :eval never-export
+  (def rate-of-improvement
+    (->> (concat  bresults r3e7 r4e7)
+         (partition 2)
+         (map #(hash-map
+                :times
+                (float (/ (:mean (first %))
+                          (:mean (second %))))
+                :count (:count (first %))))))
+
+  (first rate-of-improvement)
+  (vega->svg
+   "rate-of-improvement"
+   {:data {:values rate-of-improvement}
+    :mark {:type :bar}
+    :encoding
+    {:x     {:field :count :type :ordinal
+             :axis {:title "Collection size"}}
+     :y     {:field :times :type :quantitative
+             :axis {:title "Times faster"
+                    :format ".2"}}}})
+#+end_src
+
+#+RESULTS:
+[[file:images/rate-of-improvement.svg]]
