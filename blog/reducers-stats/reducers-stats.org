@@ -9,17 +9,12 @@
 #+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
 #+DESCRIPTION: Calculate mean value, using Clojure reducers
 
-Very short performance comparison of min, max and mean calculation on random
-Numbers collection, using built-in Clojure functions vs reducers library.
+Being a JavaScript developer i always wanted to try how it is to be able to perform 
+calculation in effective parallel way.
 
- Sample data. Up to 10 millions random numbers from 0 to 1000 in Lazy Seq and Persistent Vector collections:
- #+begin_src clojure :results silent :eval never-export :exports both
-   (defn make-sample [n]
-     (->> #(rand-int 1000)
-          (repeatedly n)))
+At first loop Clojure concentrated on a Lazy calculations , however it still have
+built-in tools for parallelisation, organized in reducers library.
 
-   (def sample (make-sample 1000))
- #+end_src
 
 ** Calculate arithmetical average
   
@@ -44,11 +39,13 @@ Numbers collection, using built-in Clojure functions vs reducers library.
             (assoc :mean (double (/ sum (count coll))))
             (dissoc :sum))))
 
+    (def sample (->> #(rand-int 1000) (repeatedly 1000)))
+
     (stats accumulator sample)
   #+end_src
 
   #+RESULTS:
-  : {:max 999, :min 1, :mean 491.248}
+  : {:max 999, :min 2, :mean 502.855}
 
 *** Using clojure.core.reducers/fold
 
@@ -70,7 +67,7 @@ Numbers collection, using built-in Clojure functions vs reducers library.
   #+end_src
 
   #+RESULTS:
-  : {:min 1, :max 999, :mean 491.248}
+  : {:min 2, :max 999, :mean 502.855}
 
 ** Benchmark
  Here is benchmark function based on [[https://github.com/hugoduncan/criterium][criterium]] library
@@ -89,27 +86,54 @@ Numbers collection, using built-in Clojure functions vs reducers library.
         :mean  (long (* 1e9 (first (:mean result))))}))
 
    (def bresults
-     (->> (for [step [1e2 1e3 1e4 1e5 1e6 1e7 2e7 3e7 4e7]]
+     (->> (for [step [10 1e2 1e3 1e4 1e5 5e5 1e6 5e6 1e7 2e7 3e7 4e7 1e8]]
             (for [[f wrap] [[#'serial-reduce identity]
                             [#'parallel-fold vec]]]
-              (bench f (wrap (make-sample (long step))))))
+              (bench (wrap (repeatedly (long step) #(rand-int 1000))))))
           (mapcat doall)))
 #+end_src
 
 #+begin_src clojure :results graphics file link :dir "./images" :file "benchmark.svg" :exports both :eval never-export
   (require '[wiz.lib.data :refer [vega->svg]])
 
-  (defn plot [name data]
-    (vega->svg
-     name
-     {:data {:values data}
-      :mark {:type :line}
-      :encoding
-      {:x     {:field :count :type :quantitative}
-       :y     {:field :mean  :type :quantitative}
-       :color {:field :fname :type :nominal}}}))
+  (def bench-results
+    [{:fname 'serial-reduce, :count 10, :mean 2972}
+     {:fname 'parallel-fold, :count 10, :mean 2424}
+     {:fname 'serial-reduce, :count 100, :mean 22215}
+     {:fname 'parallel-fold, :count 100, :mean 14642}
+     {:fname 'serial-reduce, :count 1000, :mean 217178}
+     {:fname 'parallel-fold, :count 1000, :mean 108366}
+     {:fname 'serial-reduce, :count 10000, :mean 2001453}
+     {:fname 'parallel-fold, :count 10000, :mean 615702}
+     {:fname 'serial-reduce, :count 100000, :mean 20545638}
+     {:fname 'parallel-fold, :count 100000, :mean 5243293}
+     {:fname 'serial-reduce, :count 500000, :mean 100860001}
+     {:fname 'parallel-fold, :count 500000, :mean 25466363}
+     {:fname 'serial-reduce, :count 1000000, :mean 203250896}
+     {:fname 'parallel-fold, :count 1000000, :mean 49783874}
+     {:fname 'serial-reduce, :count 5000000, :mean 1020905002}
+     {:fname 'parallel-fold, :count 5000000, :mean 260565991}
+     {:fname 'serial-reduce, :count 10000000, :mean 2111180501}
+     {:fname 'parallel-fold, :count 10000000, :mean 538156350}
+     {:fname 'serial-reduce, :count 20000000, :mean 4148491303}
+     {:fname 'parallel-fold, :count 20000000, :mean 1070961274}
+     {:fname 'serial-reduce, :count 30000000, :mean 6413696193}
+     {:fname 'parallel-fold, :count 30000000, :mean 1575614529}
+     {:fname 'serial-reduce, :count 40000000, :mean 8769748490}
+     {:fname 'parallel-fold, :count 40000000, :mean 2142264682}
+     {:fname 'serial-reduce, :count 100000000, :mean 20451333000}
+     {:fname 'parallel-fold, :count 100000000, :mean 5415781049}])
 
-  (plot "benchmark" bresults)
+  (vega->svg
+   "benchmark"
+   {:data  {:values bench-results}
+    :mark  :rect
+    :width 300
+    :encoding
+    {:x     {:field :count :type :ordinal}
+     :y     {:field :mean :type :quantitative
+             :scale {:type :log}}
+     :color {:field :fname :type :nominal}}})
 #+end_src
 
 #+RESULTS:
@@ -117,7 +141,7 @@ Numbers collection, using built-in Clojure functions vs reducers library.
 
 #+begin_src clojure :results graphics file link :dir "./images" :file "rate-of-improvement.svg" :exports both :eval never-export
   (def rate-of-improvement
-    (->> (concat  bresults r3e7 r4e7)
+    (->> bench-results
          (partition 2)
          (map #(hash-map
                 :times
@@ -125,11 +149,12 @@ Numbers collection, using built-in Clojure functions vs reducers library.
                           (:mean (second %))))
                 :count (:count (first %))))))
 
-  (first rate-of-improvement)
+
   (vega->svg
    "rate-of-improvement"
    {:data {:values rate-of-improvement}
     :mark {:type :bar}
+    :width 300
     :encoding
     {:x     {:field :count :type :ordinal
              :axis {:title "Collection size"}}
