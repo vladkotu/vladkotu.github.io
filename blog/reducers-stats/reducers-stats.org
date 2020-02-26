@@ -12,53 +12,11 @@
 Being a JavaScript developer i always wanted to try how it is to be able to perform 
 calculation in effective parallel way.
 
-At first loop Clojure concentrated on a Lazy calculations , however it still have
+At first look Clojure concentrated on a Lazy calculations, however it still have
 built-in tools for parallelisation, organized in reducers library.
 
-
-** Calculate arithmetical average
-  
-   Classic mean calculation
-#+begin_src clojure :results pp :eval never-export :exports both
-  (defn serial-mean [coll]
-    (let [count (count coll)]
-      (/ (apply + coll) count)))
-
-  (serial-mean [1 2 3])
-  ;; => 2
-#+end_src
-
-Same but using reducers
-#+begin_src clojure :results pp :eval never-export :exports both
-  (require '[clojure.core.reducers :as r])
-
-  (defn parallel-mean [coll]
-    (let [count (count coll)]
-      (/ (r/fold + coll) count)))
-
-  (parallel-mean [1 2 3])
-  ;; => 2
-#+end_src
-
-Compare their performance:
-#+begin_src clojure :results pp :eval never-export :exports both
-  (require '[criterium.core :as crit])
-
-  (defn bench [f arg]
-    (crit/with-progress-reporting
-      (crit/quick-benchmark* #(f arg) {})))
-
-  (def bench-mean-results
-    (->>
-     (let [coll (repeatedly 1000 #(rand-int 1000))]
-       [(bench #'serial-mean coll)
-        (bench #'parallel-mean coll)])
-     (map #(-> % :mean first ((partial * 1e6))))))
-
-
-  (identity bench-mean-results)
-#+end_src
-
+** Calculate  average
+   Lets
 
 *** Using built-in reduce function
   #+begin_src clojure :results pp :eval never-export :exports both
