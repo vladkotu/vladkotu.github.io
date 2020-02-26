@@ -9,129 +9,161 @@
 #+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
 #+DESCRIPTION: Calculate mean value, using Clojure reducers
 
-Being a JavaScript developer i always wanted to try how it is to be able to perform 
-calculation in effective parallel way.
 
-At first look Clojure concentrated on a Lazy calculations, however it still have
-built-in tools for parallelisation, organized in reducers library.
+Nature of data analytic, from point of programmers, could be interpreted as majority of
+`map` `reduce` operations.
 
-** Calculate  average
-   Lets
+Clojure language is very good at those, providing strong core library for data
+munging as well as number of higher level abstractions organizing, and optimizing those
+processes.
 
-*** Using built-in reduce function
+Particularly `clojure.core.reducers` library offers fairly easy way to perform parallel computations
+while keeping your code composable and easy to maintain.
+
+In this article i want to investigate reducers and give an answer for question:
+- Is it hard to write such code?
+- What rate of performance improvement in terms of computation time could be achieved?
+
+In one don't familiar with clojure reducers basic concepts I'd point out outstanding [[https://www.braveclojure.com/quests/reducers/know-your-reducers/][article and book]] 
+written by Daniel Higginbothom, author of Clojure for Brave and True
+
+
+** Calculate stats
+
+   As example for calculation will take primitive descriptive attributes, such as 
+min max and arithmetical average for collection of random numbers.
+
+*** Naive implementation
+    
+
+#+begin_src clojure :results pp :eval never-export :exports both
+  (defn naive-summary [coll]
+    (letfn [(mean   [xs cxs] (/ (reduce + xs) cxs))
+            (median [xs cxs] (nth xs (quot cxs 2)))]
+      (let [coll'   (sort coll)
+            count'  (count coll)
+            median' (median coll' count')
+            low-q   (filter #(> median' %) coll')
+            high-q  (filter #(< median' %) coll')
+            mean'   (mean coll' count')]
+        {:min  (first coll')
+         :max  (last coll')
+         :mode (ffirst (sort-by second > (frequencies coll')))
+         :mean mean'
+         :q1   (median low-q (count low-q))
+         :q2   median'
+         :q3   (median high-q (count high-q))
+         :sd   (Math/sqrt (mean (map #(Math/pow (- % mean') 2) coll')
+                                count'))})))
+
+  (def sample (->> #(rand-int 1000) (repeatedly 1000)))
+  (def wsample [7 7 31 31 47 75 87 115 116 119 119 155 177])
+  (def dogs-sample [600 470 170 430 300])
+
+  (naive-summary dogs-sample)
+  (naive-summary sample)
+
+  (def sample (doall (->> #(rand-int 1000) (repeatedly 100000))))
+  (def vsample (vec sample))
+
+  (defn pmean [xs]
+    (/ (r/fold + xs) (count xs)))
+
+  (defn pfreq [xs]
+    (r/fold (fn
+              ([] {})
+              ([a b] (merge-with +)))
+            (fn [acc x]
+              (update acc x (fnil inc 0)))
+            xs))
+
+  (defn pvariance [mean xs]
+    (/ (r/fold + #(let [m-x (- mean %2)]
+                    (+ %1 (* m-x m-x))) xs)
+       (count xs)))
+
+  (defn psummary [coll]
+    (letfn [(median [xs cxs] (nth xs (quot cxs 2)))]
+      (let [coll'   (sort coll)
+            median' (median coll' (count coll'))
+            low-q   (filter #(> median' %) coll')
+            high-q  (filter #(< median' %) coll')
+            mean'   (pmean coll')]
+        {:min  (first coll')
+         :max  (last coll')
+         :mode (ffirst (sort-by second > (pfreq coll')))
+         :mean mean'
+         :q1   (median low-q (count low-q))
+         :q2   median'
+         :q3   (median high-q (count high-q))
+         :sd   (Math/sqrt (pvariance mean' coll))})))
+#+end_src    
+
+#+RESULTS:
+: {:min 1, :max 999, :mean 507377/1000}
+
+
+*** Using clojure.core.reducers/fold
   #+begin_src clojure :results pp :eval never-export :exports both
-    (def stats-defaults {:max Double/NEGATIVE_INFINITY
-                         :min Double/POSITIVE_INFINITY
-                         :sum 0})
+    (require [clojure.core.reducers :as r])
 
-    (defn stats-reducer [acc x]
+    (def default-stats
+      {:max Double/NEGATIVE_INFINITY
+       :min Double/POSITIVE_INFINITY
+       :sum 0})
+
+    (defn stats-reducing [acc x]
       (cond-> acc
         (< x (:min acc)) (assoc :min x)
         (> x (:max acc)) (assoc :max x)
         :always          (update :sum #(+ x %))))
 
-    (defn accumulator [coll]
-      (reduce stats-reducer stats-defaults coll))
-
-    (defn stats [accumulate coll]
-      (let [{:keys [sum] :as stats'} (accumulate coll)]
-        (-> stats'
-            (assoc :mean (double (/ sum (count coll))))
-            (dissoc :sum))))
-
-    (def sample (->> #(rand-int 1000) (repeatedly 1000)))
-
-    (stats accumulator sample)
-  #+end_src
-
-  #+RESULTS:
-  : {:max 999, :min 2, :mean 502.855}
-
-*** Using clojure.core.reducers/fold
-
-  #+begin_src clojure :results pp :eval never-export :exports both
-    (require '[clojure.core.reducers :as r])
-
-    (defn stats-combiner
-      ([] stats-defaults)
+    (defn stats-combining
+      ([] default-stats)
       ([a b] {:min (min (:min a) (:min b))
               :max (max (:max a) (:max b))
-              :sum (+' (:sum a) (:sum b))}))
+              :sum (+  (:sum a) (:sum b))}))
 
-    (defn foldable-accumulator [coll]
-      (r/fold stats-combiner
-              stats-reducer
-              coll))
+    (defn parallel-summary [coll]
+      (let [stats' (r/fold stats-combining
+                           stats-reducing
+                           coll)
+            mean (/ (:sum stats')
+                    (count coll))]
+        (assoc stats' :mean mean)))
 
-    (stats foldable-accumulator (vec sample))
+    (parallel-summary sample)
   #+end_src
 
   #+RESULTS:
-  : {:min 2, :max 999, :mean 502.855}
+  : {:max 999, :min 1, :sum 507377, :mean 507377/1000}
 
-** Benchmark
- Here is benchmark function based on [[https://github.com/hugoduncan/criterium][criterium]] library
+
+
+** Benchmark section (TBR)
  #+begin_src clojure :results silent :eval never-export :exports both
-   (require '[criterium.core :as crit])
-
-   (defn serial-reduce [coll] (stats accumulator coll))
-   (defn parallel-fold [coll] (stats foldable-accumulator coll))
-
-   (defn bench [f a]
-     (let [result (crit/with-progress-reporting
-                    (crit/quick-benchmark* #(f a) {}))]
-       (crit/report-point-estimate (str (-> f meta :name)) (:mean result))
-       {:fname (-> f meta :name)
-        :count (count a)
-        :mean  (long (* 1e9 (first (:mean result))))}))
-
    (def bresults
-     (->> (for [step [10 1e2 1e3 1e4 1e5 5e5 1e6 5e6 1e7 2e7 3e7 4e7 1e8]]
-            (for [[f wrap] [[#'serial-reduce identity]
-                            [#'parallel-fold vec]]]
-              (bench (wrap (repeatedly (long step) #(rand-int 1000))))))
-          (mapcat doall)))
+     (doall
+      (for [num      (map long [10 1e2 1e3 1e4 1e5 1e6 1e7 1e8])
+            [f wrap] [[#'naive-summary identity]
+                      [#'parallel-summary vec]]]
+        (assoc (benchmark f (wrap (repeatedly num #(rand-int 1000))))
+               :count num))))
 #+end_src
 
 #+begin_src clojure :results graphics file link :dir "./images" :file "benchmark.svg" :exports both :eval never-export
   (require '[wiz.lib.data :refer [vega->svg]])
 
-  (def bench-results
-    [{:fname 'serial-reduce, :count 10, :mean 2972}
-     {:fname 'parallel-fold, :count 10, :mean 2424}
-     {:fname 'serial-reduce, :count 100, :mean 22215}
-     {:fname 'parallel-fold, :count 100, :mean 14642}
-     {:fname 'serial-reduce, :count 1000, :mean 217178}
-     {:fname 'parallel-fold, :count 1000, :mean 108366}
-     {:fname 'serial-reduce, :count 10000, :mean 2001453}
-     {:fname 'parallel-fold, :count 10000, :mean 615702}
-     {:fname 'serial-reduce, :count 100000, :mean 20545638}
-     {:fname 'parallel-fold, :count 100000, :mean 5243293}
-     {:fname 'serial-reduce, :count 500000, :mean 100860001}
-     {:fname 'parallel-fold, :count 500000, :mean 25466363}
-     {:fname 'serial-reduce, :count 1000000, :mean 203250896}
-     {:fname 'parallel-fold, :count 1000000, :mean 49783874}
-     {:fname 'serial-reduce, :count 5000000, :mean 1020905002}
-     {:fname 'parallel-fold, :count 5000000, :mean 260565991}
-     {:fname 'serial-reduce, :count 10000000, :mean 2111180501}
-     {:fname 'parallel-fold, :count 10000000, :mean 538156350}
-     {:fname 'serial-reduce, :count 20000000, :mean 4148491303}
-     {:fname 'parallel-fold, :count 20000000, :mean 1070961274}
-     {:fname 'serial-reduce, :count 30000000, :mean 6413696193}
-     {:fname 'parallel-fold, :count 30000000, :mean 1575614529}
-     {:fname 'serial-reduce, :count 40000000, :mean 8769748490}
-     {:fname 'parallel-fold, :count 40000000, :mean 2142264682}
-     {:fname 'serial-reduce, :count 100000000, :mean 20451333000}
-     {:fname 'parallel-fold, :count 100000000, :mean 5415781049}])
-
   (vega->svg
    "benchmark"
-   {:data  {:values bench-results}
+   {:data  {:values bresults}
     :mark  :rect
     :width 300
     :encoding
-    {:x     {:field :count :type :ordinal}
-     :y     {:field :mean :type :quantitative
+    {:x     {:field :count :type :ordinal
+             :axis {:title "Collection size"}}
+     :y     {:field :time :type :quantitative
+             :axis {:title "time (µs)"}
              :scale {:type :log}}
      :color {:field :fname :type :nominal}}})
 #+end_src
@@ -139,16 +171,15 @@ built-in tools for parallelisation, organized in reducers library.
 #+RESULTS:
 [[file:images/benchmark.svg]]
 
+
 #+begin_src clojure :results graphics file link :dir "./images" :file "rate-of-improvement.svg" :exports both :eval never-export
   (def rate-of-improvement
-    (->> bench-results
+    (->> bresults
          (partition 2)
          (map #(hash-map
-                :times
-                (float (/ (:mean (first %))
-                          (:mean (second %))))
+                :times (/ (:time (first %))
+                          (:time (second %)))
                 :count (:count (first %))))))
-
 
   (vega->svg
    "rate-of-improvement"
@@ -165,3 +196,61 @@ built-in tools for parallelisation, organized in reducers library.
 
 #+RESULTS:
 [[file:images/rate-of-improvement.svg]]
+
+
+** No export :noexport:
+*** benchmark function                                             :noexport:
+#+begin_src clojure :results silent :eval never-export :exports none
+   (require '[criterium.core :as crit])
+
+   (defn benchmark [f & args]
+     (let [result (crit/with-progress-reporting
+                    (crit/quick-benchmark* #(apply f args) {}))]
+       (crit/report-point-estimate (str (-> f meta :name)) (:mean result))
+       {:fname (-> f meta :name)
+        :time  (long (* 1e9 (first (:mean result))))}))
+#+end_src
+*** cached benchmark results
+#+begin_src clojure :results pp :eval never-export :exports never
+  ({:fname naive-summary,    :time 2485,        :count 10}
+   {:fname parallel-summary, :time 2146,        :count 10}
+   {:fname naive-summary,    :time 20720,       :count 100}
+   {:fname parallel-summary, :time 12698,       :count 100}
+   {:fname naive-summary,    :time 205130,      :count 1000}
+   {:fname parallel-summary, :time 103530,      :count 1000}
+   {:fname naive-summary,    :time 1987225,     :count 10000}
+   {:fname parallel-summary, :time 573842,      :count 10000}
+   {:fname naive-summary,    :time 20715541,    :count 100000}
+   {:fname parallel-summary, :time 4785399,     :count 100000}
+   {:fname naive-summary,    :time 204179892,   :count 1000000}
+   {:fname parallel-summary, :time 45640858,    :count 1000000}
+   {:fname naive-summary,    :time 2044183064,  :count 10000000}
+   {:fname parallel-summary, :time 457533399,   :count 10000000}
+   {:fname naive-summary,    :time 21588108771, :count 100000000}
+   {:fname parallel-summary, :time 4725844409,  :count 100000000})
+
+#+end_src
+
+*** Tunining fold                                                  :noexport:
+#+begin_src clojure :results pp :eval never-export :exports both
+  (defn sum [n coll]
+    (r/fold n + + coll))
+
+  (def results-tune
+    (let [xs (vec (repeatedly 1e6 #(rand-int 1000)))]
+      (doall
+       (concat
+        (benchmark (fn sum-default [xs] (sum 512 xs)) xs)
+        (benchmark (fn sum-experimental-8 [xs] (sum 8 xs)) xs)
+        (benchmark (fn sum-experimental-2028 [xs] (sum 2028 xs)) xs)))))
+#+end_src
+  
+#+RESULTS:
+: ([:fname nil]
+: [:time 5495233]
+: [:fname nil]
+: [:time 23819806]
+: [:fname nil]
+: [:time 5097659])
+
+Conclusion: small threads count leads to serial performance
