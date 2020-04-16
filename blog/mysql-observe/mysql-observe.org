@@ -157,7 +157,6 @@ And hierarchies are about titles and salaries.
 
 
 
-
 **** What titles exists in organization?
 
   At first look to how many titles are recorded may confuse:
@@ -333,7 +332,7 @@ How about to check it from point of money?
   #+TBLFM: @4$2=100*(@2$2-@3$2)/@2$2; %.2f
 
 **** Distribution of salaries across departments and roles:         :ARCHIVE:
-#+BEGIN_SRC sql
+#+BEGIN_SRC sql :eval never-export
 SHOW VARIABLES LIKE "secure_file_priv";
 #+END_SRC
 
@@ -344,11 +343,11 @@ SHOW VARIABLES LIKE "secure_file_priv";
 
 To make able mysql client to save data directly to a file i had to do 2 things:
 - notify mysql that this folder is safe for writing to by passing =--secure-file-priv= startup option
-#+begin_src sh
+#+begin_src sh :eval never-export
 sudo /usr/local/mysql/support-files/mysql.server start --secure-file-priv=/path/to/folder
 #+end_src
 - secondly i had to change ownership of output filder, to overcome permission problem
-#+begin_src sh
+#+begin_src sh :eval never-export
 chown -R _mysql ./files
 #+end_src 
 
@@ -375,7 +374,7 @@ chown -R _mysql ./files
                 LINES TERMINATED BY '\n';
   #+END_SRC
 
-#+begin_src sh :results output
+#+begin_src sh :results output :eval never-export
   ls -lh ./files/sql-dump.csv
   head -n 5 ./files/sql-dump.csv
 #+end_src
@@ -387,10 +386,6 @@ chown -R _mysql ./files
 : "Production","Senior Engineer","43311"
 : "Production","Senior Engineer","74057"
 : "Human Resources","Senior Staff","94692"
-
-#+begin_src clojure :var input=(print (org-sbe emps)) :results graphics file link :dir "./images" :file "employees.svg" :exports both :eval never-export
-
-#+end_src
 
 As we saw in previous examples there are 9 departments. Let's reduce observable
 number to 3 groups as of it much simplier to analyze. We'd compare Development
