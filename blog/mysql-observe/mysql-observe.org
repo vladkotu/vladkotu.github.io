@@ -1,0 +1,455 @@
+#+TITLE:       Practicing SQL with MySQL test employees database
+#+AUTHOR:      Vladimir Kotushenko
+#+EMAIL:       volodymyr.kotushenko@gmail.com
+#+DATE:        2020-01-28 
+#+URI:         /blog/clojure-reducers-statistics
+#+KEYWORDS:    SQL, MySQL, data mining
+#+TAGS:        Learning, Beginners, SQL, MySQL, data mining
+#+LANGUAGE:    en
+#+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: Find some insigts from relational database using SQL
+
+** What insights about organization could be found in this data set?
+   :PROPERTIES:
+   :header-args:sql: :engine mysql
+   :header-args:sql+: :dbhost 127.0.0.1
+   :header-args:sql+: :dbport 3306 
+   :header-args:sql+: :dbuser vladimir
+   :header-args:sql+: :dbpassword vlad_pass
+   :header-args:sql+: :database employees
+   :END:
+   Browsing on internet, searching for a test database i can practice SQL skills on , i found
+[[https://dev.mysql.com/doc/employee/en/employees-introduction.html][this MySQL]] test database, that looks good for a given purpose.
+
+
+It's a employees database with their titles, salaries and departments also includes some historical data in.
+
+Here is schema from [[https://dev.mysql.com/doc/employee/en/sakila-structure.html][dev.mysql.com]]:
+
+#+attr_html: :width 300px 
+[[./images/employees-schema.png]]
+
+
+Let's assume, that at high level of degree, organizations are about hierarchies.
+And hierarchies are about titles and salaries.
+
+**** Explore tables                                                :noexport:
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ show tables;
+  #+END_SRC
+
+  #+RESULTS:
+  | Tables_in_employees  |
+  |----------------------|
+  | current_dept_emp     |
+  | departments          |
+  | dept_emp             |
+  | dept_emp_latest_date |
+  | dept_manager         |
+  | employees            |
+  | salaries             |
+  | titles               |
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ describe employees;
+  #+END_SRC
+
+  #+RESULTS:
+  | Field      | Type          | Null | Key | Default | Extra |
+  |------------+---------------+------+-----+---------+-------|
+  | emp_no     | int           | NO   | PRI | NULL    |       |
+  | birth_date | date          | NO   |     | NULL    |       |
+  | first_name | varchar(14)   | NO   |     | NULL    |       |
+  | last_name  | varchar(16)   | NO   |     | NULL    |       |
+  | gender     | enum('M','F') | NO   |     | NULL    |       |
+  | hire_date  | date          | NO   |     | NULL    |       |
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ select * from employees limit 6;
+  #+END_SRC
+
+  #+RESULTS:
+  | emp_no | birth_date | first_name | last_name | gender |  hire_date |
+  |--------+------------+------------+-----------+--------+------------|
+  |  10001 | 1953-09-02 | Georgi     | Facello   | M      | 1986-06-26 |
+  |  10002 | 1964-06-02 | Bezalel    | Simmel    | F      | 1985-11-21 |
+  |  10003 | 1959-12-03 | Parto      | Bamford   | M      | 1986-08-28 |
+  |  10004 | 1954-05-01 | Chirstian  | Koblick   | M      | 1986-12-01 |
+  |  10005 | 1955-01-21 | Kyoichi    | Maliniak  | M      | 1989-09-12 |
+  |  10006 | 1953-04-20 | Anneke     | Preusig   | F      | 1989-06-02 |
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ describe departments;
+  #+END_SRC
+
+  #+RESULTS:
+  | Field     | Type        | Null | Key | Default | Extra |
+  |-----------+-------------+------+-----+---------+-------|
+  | dept_no   | char(4)     | NO   | PRI | NULL    |       |
+  | dept_name | varchar(40) | NO   | UNI | NULL    |       |
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ select * from departments limit 6;
+  #+END_SRC
+
+  #+RESULTS:
+  | dept_no | dept_name        |
+  |---------+------------------|
+  | d009    | Customer Service |
+  | d005    | Development      |
+  | d002    | Finance          |
+  | d003    | Human Resources  |
+  | d001    | Marketing        |
+  | d004    | Production       |
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ describe dept_emp;
+  #+END_SRC
+
+  #+RESULTS:
+  | Field     | Type    | Null | Key | Default | Extra |
+  |-----------+---------+------+-----+---------+-------|
+  | emp_no    | int     | NO   | PRI | NULL    |       |
+  | dept_no   | char(4) | NO   | PRI | NULL    |       |
+  | from_date | date    | NO   |     | NULL    |       |
+  | to_date   | date    | NO   |     | NULL    |       |
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ select * from dept_emp limit 6;
+  #+END_SRC
+
+  #+RESULTS:
+  | emp_no | dept_no |  from_date |    to_date |
+  |--------+---------+------------+------------|
+  |  10001 | d005    | 1986-06-26 | 9999-01-01 |
+  |  10002 | d007    | 1996-08-03 | 9999-01-01 |
+  |  10003 | d004    | 1995-12-03 | 9999-01-01 |
+  |  10004 | d004    | 1986-12-01 | 9999-01-01 |
+  |  10005 | d003    | 1989-09-12 | 9999-01-01 |
+  |  10006 | d005    | 1990-08-05 | 9999-01-01 |
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ describe titles;
+  #+END_SRC
+
+  #+RESULTS:
+  | Field     | Type        | Null | Key | Default | Extra |
+  |-----------+-------------+------+-----+---------+-------|
+  | emp_no    | int         | NO   | PRI | NULL    |       |
+  | title     | varchar(50) | NO   | PRI | NULL    |       |
+  | from_date | date        | NO   | PRI | NULL    |       |
+  | to_date   | date        | YES  |     | NULL    |       |
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+ select * from titles limit 6;
+  #+END_SRC
+
+  #+RESULTS:
+  | emp_no | title           |  from_date |    to_date |
+  |--------+-----------------+------------+------------|
+  |  10001 | Senior Engineer | 1986-06-26 | 9999-01-01 |
+  |  10002 | Staff           | 1996-08-03 | 9999-01-01 |
+  |  10003 | Senior Engineer | 1995-12-03 | 9999-01-01 |
+  |  10004 | Engineer        | 1986-12-01 | 1995-12-01 |
+  |  10004 | Senior Engineer | 1995-12-01 | 9999-01-01 |
+  |  10005 | Senior Staff    | 1996-09-12 | 9999-01-01 |
+ 
+
+
+
+
+**** What titles exists in organization?
+
+  At first look to how many titles are recorded may confuse:
+  #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT count(*) FROM titles
+  #+END_SRC
+
+  #+RESULTS:
+  | count(*) |
+  |----------|
+  |   443308 |
+
+  Way too much anyone could imagine, but let's look closer:
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT title, COUNT(*) FROM titles GROUP BY title
+  #+END_SRC
+
+  #+RESULTS:
+  | title              | COUNT(*) |
+  |--------------------+----------|
+  | Senior Engineer    |    97750 |
+  | Staff              |   107391 |
+  | Engineer           |   115003 |
+  | Senior Staff       |    92853 |
+  | Assistant Engineer |    15128 |
+  | Technique Leader   |    15159 |
+  | Manager            |       24 |
+
+  That's because every record not exactly a title by essence, but rather record of fact
+  of occupation of title by employee....
+
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT DISTINCT title FROM titles
+  #+END_SRC
+
+  #+RESULTS:
+  | title              |
+  |--------------------|
+  | Senior Engineer    |
+  | Staff              |
+  | Engineer           |
+  | Senior Staff       |
+  | Assistant Engineer |
+  | Technique Leader   |
+  | Manager            |
+
+So it's 7 titles in total exists, that are available for occupation for those,
+who seeking fame and respect.
+
+Despite intuitively some titles seems to be more respectfully than others,
+an tree of hierarchy isn't absolutely clear for now. 
+
+Let's continue investigate: 
+
+**** How many active managers there are in company?
+   #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT count(*) FROM dept_manager WHERE to_date > NOW()
+  #+END_SRC
+
+  #+RESULTS:
+  | count(*) |
+  |----------|
+  |        9 |
+
+**** How many departments are exists?
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT count(*) FROM departments
+  #+END_SRC
+
+  #+RESULTS:
+  | count(*) |
+  |----------|
+  |        9 |
+
+Alright, than - every department holds by exactly one manager.
+
+So probably at this point one can guess, managers are topmost title?
+
+How about to check it from point of money?
+
+**** Who are those manager, their departments, and salaries?
+
+  #+NAME: managers-salaries
+  #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT
+         e.first_name, e.last_name, e.gender, d.dept_name, s.salary
+     FROM
+         dept_manager AS dm
+         LEFT JOIN employees AS e ON e.emp_no = dm.emp_no
+         LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+         LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+         LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+     WHERE
+         dm.to_date > now() AND s.to_date > now()
+     ORDER BY
+         s.salary DESC
+  #+END_SRC
+
+  #+RESULTS: managers-salaries
+  | first_name | last_name  | gender | dept_name          | salary |
+  |------------+------------+--------+--------------------+--------|
+  | Vishwani   | Minakawa   | M      | Marketing          | 106491 |
+  | Hauke      | Zhang      | M      | Sales              | 101987 |
+  | Isamu      | Legleitner | F      | Finance            |  83457 |
+  | Hilary     | Kambil     | F      | Research           |  79393 |
+  | Leon       | DasSarma   | F      | Development        |  74510 |
+  | Dung       | Pesch      | M      | Quality Management |  72876 |
+  | Karsten    | Sigstam    | F      | Human Resources    |  65400 |
+  | Yuchang    | Weedman    | M      | Customer Service   |  58745 |
+  | Oscar      | Ghazalie   | M      | Production         |  56654 |
+
+**** How many employees currently are working in every department and what their average salary?
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+    SELECT
+        d.dept_no, d.dept_name, count(*) AS emp_count, AVG(s.salary) as salary
+    FROM
+        employees AS e
+        LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+        LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+        LEFT JOIN titles AS t ON t.emp_no = e.emp_no
+        LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+    WHERE
+        de.to_date > NOW()
+        AND t.to_date > NOW()
+        AND s.to_date > NOW()
+    GROUP BY
+        d.dept_name
+    ORDER BY
+        emp_count
+ #+END_SRC
+
+ #+RESULTS:
+ | dept_no | dept_name          | emp_count |     salary |
+ |---------+--------------------+-----------+------------|
+ | d002    | Finance            |     12437 | 78559.9370 |
+ | d003    | Human Resources    |     12898 | 63921.8998 |
+ | d006    | Quality Management |     14546 | 65441.9934 |
+ | d001    | Marketing          |     14842 | 80058.8488 |
+ | d008    | Research           |     15441 | 67913.3750 |
+ | d009    | Customer Service   |     17569 | 67285.2302 |
+ | d007    | Sales              |     37701 | 88852.9695 |
+ | d004    | Production         |     53304 | 67843.3020 |
+ | d005    | Development        |     61386 | 67657.9196 |
+
+**** What is average salary by gender?
+   #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT
+       e.gender, AVG(s.salary) as avg_salary
+     FROM
+         dept_manager AS dm
+         LEFT JOIN employees AS e ON e.emp_no = dm.emp_no
+         LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+         LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+         LEFT JOIN titles AS t ON t.emp_no = e.emp_no
+         LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+     WHERE
+         dm.to_date > NOW()
+         AND t.to_date > NOW()
+         AND s.to_date > NOW()
+     GROUP BY e.gender
+  #+END_SRC
+
+  #+RESULTS:
+  | gender | avg_salary |
+  |--------+------------|
+  | M      | 79350.6000 |
+  | F      | 75690.0000 |
+  | %      |       4.61 |
+  #+TBLFM: @4$2=100*(@2$2-@3$2)/@2$2; %.2f
+
+**** Distribution of salaries across departments and roles:         :ARCHIVE:
+#+BEGIN_SRC sql
+SHOW VARIABLES LIKE "secure_file_priv";
+#+END_SRC
+
+#+RESULTS:
+| Variable_name    | Value |
+|------------------+-------|
+| secure_file_priv | NULL  |
+
+To make able mysql client to save data directly to a file i had to do 2 things:
+- notify mysql that this folder is safe for writing to by passing =--secure-file-priv= startup option
+#+begin_src sh
+sudo /usr/local/mysql/support-files/mysql.server start --secure-file-priv=/path/to/folder
+#+end_src
+- secondly i had to change ownership of output filder, to overcome permission problem
+#+begin_src sh
+chown -R _mysql ./files
+#+end_src 
+
+
+
+  #+NAME: emps
+  #+BEGIN_SRC sql :results silent :eval never-export :exports both 
+         SELECT
+             d.dept_name, t.title, s.salary
+         FROM
+             employees AS e
+             LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+             LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+             LEFT JOIN titles AS t ON t.emp_no = e.emp_no
+             LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+         WHERE
+             de.to_date > NOW()
+             AND t.to_date > NOW()
+             AND s.to_date > NOW()
+          -- limit 10
+           INTO OUTFILE '/Users/vladimir/projects/blog/blog/mysql-observe/files/sql-dump.csv'
+                FIELDS TERMINATED BY ','
+                ENCLOSED BY '"'
+                LINES TERMINATED BY '\n';
+  #+END_SRC
+
+#+begin_src sh :results output
+  ls -lh ./files/sql-dump.csv
+  head -n 5 ./files/sql-dump.csv
+#+end_src
+
+#+RESULTS:
+: -rw-r-----  1 _mysql  staff   8.4M Mar  6 19:58 ./files/sql-dump.csv
+: "Development","Senior Engineer","88958"
+: "Sales","Staff","72527"
+: "Production","Senior Engineer","43311"
+: "Production","Senior Engineer","74057"
+: "Human Resources","Senior Staff","94692"
+
+#+begin_src clojure :var input=(print (org-sbe emps)) :results graphics file link :dir "./images" :file "employees.svg" :exports both :eval never-export
+
+#+end_src
+
+As we saw in previous examples there are 9 departments. Let's reduce observable
+number to 3 groups as of it much simplier to analyze. We'd compare Development
+department over Sales over Managers.
+
+Firstly we'd need to read csv data:
+#+NAME: clj-emps
+#+begin_src clojure :results graphics file link :dir "./images" :file "employees.svg" :exports both :eval never-export
+    (require '[wiz.lib.data :refer [vega->svg]])
+  (require '[semantic-csv.core :as sc])
+
+  (def data (->> (sc/slurp-csv "./files/sql-dump.csv"
+                               :header [:department :title :salary])
+                 (map #(update % :salary read-string))))
+
+  (vega->svg
+   "employees"
+   {:data {:values data}
+    :facet {:row {:field :department :type :nominal}}
+    :spec {
+           :mark {:type :boxplot :extent "min-max"}
+           :encoding
+           {:x     {:field :salary :type :quantitative}
+            :y     {:field :title :type :nominal}}}})
+#+end_src
+
+Than let's group all managers:
+#+begin_src clojure :results pp :eval never-export :exports both
+  (def sample
+(->> data
+       (filter #(or (= "Manager" (:title %))
+                    ((set ["Development" "Sales"])
+                     (:department %))))
+       (map #(if (= "Manager" (:title %))
+               (assoc % :department "Manager")
+               %))))
+
+#+end_src
+
+#+RESULTS:
+: #'user/sample
+
+#+begin_src clojure :results graphics file link :dir "./images" :file "emps.svg" :exports both :eval never-export
+
+  (vega->svg
+   "emps"
+   {:data {:values sample}
+    :facet {:row {:field :department :type :nominal}}
+    :spec {
+           :mark {:type :boxplot :extent "min-max"}
+           :encoding
+           {:x     {:field :salary :type :quantitative}
+            :y     {:field :title :type :nominal}}}})
+#+end_src
+
+#+RESULTS:
+[[file:images/emps.svg]]
+
+If one would want to decide how to make more money in this organization, here couple of conclusions:
+- it's better to be Senior Sales stuff than all others
+- it's better to be highly qualified Senior/Tech lead Developer than manager
+- Managers are gaining bigger salary in average than developers
