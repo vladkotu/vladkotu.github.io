@@ -306,22 +306,22 @@ How about to check it from point of money?
  | d005    | Development        |     61386 | 67657.9196 |
 
 **** What is average salary by gender?
-   #+BEGIN_SRC sql :eval never-export :exports both  
-     SELECT
-       e.gender, AVG(s.salary) as avg_salary
-     FROM
-         dept_manager AS dm
-         LEFT JOIN employees AS e ON e.emp_no = dm.emp_no
-         LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
-         LEFT JOIN departments AS d ON d.dept_no = de.dept_no
-         LEFT JOIN titles AS t ON t.emp_no = e.emp_no
-         LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
-     WHERE
-         dm.to_date > NOW()
-         AND t.to_date > NOW()
-         AND s.to_date > NOW()
-     GROUP BY e.gender
-  #+END_SRC
+#+BEGIN_SRC sql :eval never-export :exports both  
+   SELECT
+     e.gender, AVG(s.salary) as avg_salary
+   FROM
+       dept_manager AS dm
+       LEFT JOIN employees AS e ON e.emp_no = dm.emp_no
+       LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+       LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+       LEFT JOIN titles AS t ON t.emp_no = e.emp_no
+       LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+   WHERE
+       dm.to_date > NOW()
+       AND t.to_date > NOW()
+       AND s.to_date > NOW()
+   GROUP BY e.gender
+#+END_SRC
 
   #+RESULTS:
   | gender | avg_salary |
@@ -351,28 +351,25 @@ sudo /usr/local/mysql/support-files/mysql.server start --secure-file-priv=/path/
 chown -R _mysql ./files
 #+end_src 
 
-
-
-  #+NAME: emps
-  #+BEGIN_SRC sql :results silent :eval never-export :exports both 
-         SELECT
-             d.dept_name, t.title, s.salary
-         FROM
-             employees AS e
-             LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
-             LEFT JOIN departments AS d ON d.dept_no = de.dept_no
-             LEFT JOIN titles AS t ON t.emp_no = e.emp_no
-             LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+#+NAME: emps
+#+BEGIN_SRC sql :results silent :eval never-export :exports both 
+      SELECT
+           d.dept_name, t.title, s.salary
+      FROM
+           employees AS e
+           LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+           LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+           LEFT JOIN titles AS t ON t.emp_no = e.emp_no
+           LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
          WHERE
-             de.to_date > NOW()
-             AND t.to_date > NOW()
-             AND s.to_date > NOW()
-          -- limit 10
-           INTO OUTFILE '/Users/vladimir/projects/blog/blog/mysql-observe/files/sql-dump.csv'
-                FIELDS TERMINATED BY ','
-                ENCLOSED BY '"'
-                LINES TERMINATED BY '\n';
-  #+END_SRC
+           de.to_date > NOW()
+           AND t.to_date > NOW()
+           AND s.to_date > NOW()
+         INTO OUTFILE '/Users/vladimir/projects/blog/blog/mysql-observe/files/sql-dump.csv'
+              FIELDS TERMINATED BY ','
+              ENCLOSED BY '"'
+              LINES TERMINATED BY '\n';
+#+END_SRC
 
 #+begin_src sh :results output :eval never-export
   ls -lh ./files/sql-dump.csv
@@ -394,7 +391,7 @@ department over Sales over Managers.
 Firstly we'd need to read csv data:
 #+NAME: clj-emps
 #+begin_src clojure :results graphics file link :dir "./images" :file "employees.svg" :exports both :eval never-export
-    (require '[wiz.lib.data :refer [vega->svg]])
+  (require '[wiz.lib.data :refer [vega->svg]])
   (require '[semantic-csv.core :as sc])
 
   (def data (->> (sc/slurp-csv "./files/sql-dump.csv"
@@ -414,22 +411,20 @@ Firstly we'd need to read csv data:
 
 Than let's group all managers:
 #+begin_src clojure :results pp :eval never-export :exports both
-  (def sample
-(->> data
-       (filter #(or (= "Manager" (:title %))
-                    ((set ["Development" "Sales"])
-                     (:department %))))
-       (map #(if (= "Manager" (:title %))
-               (assoc % :department "Manager")
-               %))))
-
+    (def sample
+      (->> data
+           (filter #(or (= "Manager" (:title %))
+                        ((set ["Development" "Sales"])
+                         (:department %))))
+           (map #(if (= "Manager" (:title %))
+                   (assoc % :department "Manager")
+                   %))))
 #+end_src
 
 #+RESULTS:
 : #'user/sample
 
 #+begin_src clojure :results graphics file link :dir "./images" :file "emps.svg" :exports both :eval never-export
-
   (vega->svg
    "emps"
    {:data {:values sample}
