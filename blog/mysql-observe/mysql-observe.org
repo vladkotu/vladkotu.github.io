@@ -1,13 +1,15 @@
-#+TITLE:       MySQL test bd exploration
+#+TITLE:       Practicing SQL with MySQL test employees database
 #+AUTHOR:      Vladimir Kotushenko
 #+EMAIL:       volodymyr.kotushenko@gmail.com
-#+KEYWORDS:    MySQL, databases, clojure
+#+DATE:        2020-01-28 
+#+URI:         /blog/clojure-reducers-statistics
+#+KEYWORDS:    SQL, MySQL, data mining
+#+TAGS:        Learning, Beginners, SQL, MySQL, data mining
 #+LANGUAGE:    en
 #+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
-#+DESCRIPTION: Exploring data in database in MySQL test db
+#+DESCRIPTION: Find some insigts from relational database using SQL
 
-** Practice to remember SQL 
-*** MySQL test DB
+** What insights about organization could be found in this data set?
    :PROPERTIES:
    :header-args:sql: :engine mysql
    :header-args:sql+: :dbhost 127.0.0.1
@@ -16,6 +18,20 @@
    :header-args:sql+: :dbpassword vlad_pass
    :header-args:sql+: :database employees
    :END:
+   Browsing on internet, searching for a test database i can practice SQL skills on , i found
+[[https://dev.mysql.com/doc/employee/en/employees-introduction.html][this MySQL]] test database, that looks good for a given purpose.
+
+
+It's a employees database with their titles, salaries and departments also includes some historical data in.
+
+Here is schema from [[https://dev.mysql.com/doc/employee/en/sakila-structure.html][dev.mysql.com]]:
+
+#+attr_html: :width 300px 
+[[./images/employees-schema.png]]
+
+
+Let's assume, that at high level of degree, organizations are about hierarchies.
+And hierarchies are about titles and salaries.
 
 **** Explore tables                                                :noexport:
   #+BEGIN_SRC sql :eval never-export :exports both  
@@ -140,17 +156,63 @@
  
 
 
-**** How many departments are exists?
-:eval never-export :exports both
+
+
+**** What titles exists in organization?
+
+  At first look to how many titles are recorded may confuse:
   #+BEGIN_SRC sql :eval never-export :exports both  
-     SELECT count(*) FROM departments
+     SELECT count(*) FROM titles
   #+END_SRC
 
   #+RESULTS:
   | count(*) |
   |----------|
-  |        9 |
+  |   443308 |
 
+  Way too much anyone could imagine, but let's look closer:
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT title, COUNT(*) FROM titles GROUP BY title
+  #+END_SRC
+
+  #+RESULTS:
+  | title              | COUNT(*) |
+  |--------------------+----------|
+  | Senior Engineer    |    97750 |
+  | Staff              |   107391 |
+  | Engineer           |   115003 |
+  | Senior Staff       |    92853 |
+  | Assistant Engineer |    15128 |
+  | Technique Leader   |    15159 |
+  | Manager            |       24 |
+
+  That's because every record not exactly a title by essence, but rather record of fact
+  of occupation of title by employee....
+
+
+  #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT DISTINCT title FROM titles
+  #+END_SRC
+
+  #+RESULTS:
+  | title              |
+  |--------------------|
+  | Senior Engineer    |
+  | Staff              |
+  | Engineer           |
+  | Senior Staff       |
+  | Assistant Engineer |
+  | Technique Leader   |
+  | Manager            |
+
+So it's 7 titles in total exists, that are available for occupation for those,
+who seeking fame and respect.
+
+Despite intuitively some titles seems to be more respectfully than others,
+an tree of hierarchy isn't absolutely clear for now. 
+
+Let's continue investigate: 
 
 **** How many active managers there are in company?
    #+BEGIN_SRC sql :eval never-export :exports both  
@@ -162,15 +224,29 @@
   |----------|
   |        9 |
 
- Each department have exactly one manager.
+**** How many departments are exists?
 
+  #+BEGIN_SRC sql :eval never-export :exports both  
+     SELECT count(*) FROM departments
+  #+END_SRC
 
+  #+RESULTS:
+  | count(*) |
+  |----------|
+  |        9 |
 
-**** What are manager's salaries:
-   #+BEGIN_SRC sql :eval never-export :exports both  
+Alright, than - every department holds by exactly one manager.
+
+So probably at this point one can guess, managers are topmost title?
+
+How about to check it from point of money?
+
+**** Who are those manager, their departments, and salaries?
+
+  #+NAME: managers-salaries
+  #+BEGIN_SRC sql :eval never-export :exports both  
      SELECT
-         e.first_name, e.last_name, e.gender,
-         d.dept_name, s.salary
+         e.first_name, e.last_name, e.gender, d.dept_name, s.salary
      FROM
          dept_manager AS dm
          LEFT JOIN employees AS e ON e.emp_no = dm.emp_no
@@ -178,13 +254,12 @@
          LEFT JOIN departments AS d ON d.dept_no = de.dept_no
          LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
      WHERE
-         dm.to_date > now()
-         AND s.to_date > now()
+         dm.to_date > now() AND s.to_date > now()
      ORDER BY
          s.salary DESC
   #+END_SRC
 
-  #+RESULTS:
+  #+RESULTS: managers-salaries
   | first_name | last_name  | gender | dept_name          | salary |
   |------------+------------+--------+--------------------+--------|
   | Vishwani   | Minakawa   | M      | Marketing          | 106491 |
@@ -196,7 +271,6 @@
   | Karsten    | Sigstam    | F      | Human Resources    |  65400 |
   | Yuchang    | Weedman    | M      | Customer Service   |  58745 |
   | Oscar      | Ghazalie   | M      | Production         |  56654 |
-
 
 **** How many employees currently are working in every department and what their average salary?
 
@@ -318,6 +392,11 @@ chown -R _mysql ./files
 
 #+end_src
 
+As we saw in previous examples there are 9 departments. Let's reduce observable
+number to 3 groups as of it much simplier to analyze. We'd compare Development
+department over Sales over Managers.
+
+Firstly we'd need to read csv data:
 #+NAME: clj-emps
 #+begin_src clojure :results graphics file link :dir "./images" :file "employees.svg" :exports both :eval never-export
     (require '[wiz.lib.data :refer [vega->svg]])
@@ -338,7 +417,39 @@ chown -R _mysql ./files
             :y     {:field :title :type :nominal}}}})
 #+end_src
 
-#+RESULTS: clj-emps
-[[file:images/employees.svg]]
+Than let's group all managers:
+#+begin_src clojure :results pp :eval never-export :exports both
+  (def sample
+(->> data
+       (filter #(or (= "Manager" (:title %))
+                    ((set ["Development" "Sales"])
+                     (:department %))))
+       (map #(if (= "Manager" (:title %))
+               (assoc % :department "Manager")
+               %))))
 
+#+end_src
 
+#+RESULTS:
+: #'user/sample
+
+#+begin_src clojure :results graphics file link :dir "./images" :file "emps.svg" :exports both :eval never-export
+
+  (vega->svg
+   "emps"
+   {:data {:values sample}
+    :facet {:row {:field :department :type :nominal}}
+    :spec {
+           :mark {:type :boxplot :extent "min-max"}
+           :encoding
+           {:x     {:field :salary :type :quantitative}
+            :y     {:field :title :type :nominal}}}})
+#+end_src
+
+#+RESULTS:
+[[file:images/emps.svg]]
+
+If one would want to decide how to make more money in this organization, here couple of conclusions:
+- it's better to be Senior Sales stuff than all others
+- it's better to be highly qualified Senior/Tech lead Developer than manager
+- Managers are gaining bigger salary in average than developers

@@ -1,0 +1,485 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2020-03-07 Sat 17:16 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calculate statistical attributes, using Clojure reducers</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Vladimir Kotushenko" />
+<meta name="description" content="Calculate mean value, using Clojure reducers"
+ />
+<meta name="keywords" content="clojure, statistics, reducers, short" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Calculate statistical attributes, using Clojure reducers</h1>
+<p>
+Nature of data analytic, from point of programmers, could be interpreted as majority of
+`map` `reduce` operations.
+</p>
+
+<p>
+Clojure language is very good at those, providing strong core library for data
+munging as well as number of higher level abstractions organizing, and optimizing those
+processes.
+</p>
+
+<p>
+Particularly `clojure.core.reducers` library offers fairly easy way to perform parallel computations
+while keeping your code composable and easy to maintain.
+</p>
+
+<p>
+In this article i want to investigate reducers and give an answer for question:
+</p>
+<ul class="org-ul">
+<li>Is it hard to write such code?</li>
+<li>What rate of performance improvement in terms of computation time could be achieved?</li>
+</ul>
+
+<p>
+In one don't familiar with clojure reducers basic concepts I'd point out outstanding <a href="https://www.braveclojure.com/quests/reducers/know-your-reducers/">article and book</a> 
+written by Daniel Higginbothom, author of Clojure for Brave and True
+</p>
+
+
+<div id="outline-container-org9c2881a" class="outline-2">
+<h2 id="org9c2881a">Calculate stats</h2>
+<div class="outline-text-2" id="text-org9c2881a">
+<p>
+   As example for calculation will take primitive descriptive attributes, such as 
+min max and arithmetical average for collection of random numbers.
+</p>
+</div>
+
+<div id="outline-container-orga693450" class="outline-3">
+<h3 id="orga693450">Naive implementation</h3>
+<div class="outline-text-3" id="text-orga693450">
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">defn</span> <span style="color: #29838D;">naive-summary</span> <span style="color: #97365B;">[</span>coll<span style="color: #97365B;">]</span>
+  <span style="color: #97365B;">(</span><span style="color: #3B6EA8;">letfn</span> <span style="color: #4F894C;">[</span><span style="color: #AC4426;">(</span>mean   <span style="color: #842879;">[</span>xs cxs<span style="color: #842879;">]</span> <span style="color: #842879;">(</span>/ <span style="color: #9A7500;">(</span>reduce + xs<span style="color: #9A7500;">)</span> cxs<span style="color: #842879;">)</span><span style="color: #AC4426;">)</span>
+          <span style="color: #AC4426;">(</span>median <span style="color: #842879;">[</span>xs cxs<span style="color: #842879;">]</span> <span style="color: #842879;">(</span>nth xs <span style="color: #9A7500;">(</span>quot cxs <span style="color: #97365B; font-weight: bold;">2</span><span style="color: #9A7500;">)</span><span style="color: #842879;">)</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">]</span>
+    <span style="color: #4F894C;">(</span><span style="color: #3B6EA8;">let</span> <span style="color: #AC4426;">[</span>coll'   <span style="color: #842879;">(</span>sort coll<span style="color: #842879;">)</span>
+          count'  <span style="color: #842879;">(</span>count coll<span style="color: #842879;">)</span>
+          median' <span style="color: #842879;">(</span>median coll' count'<span style="color: #842879;">)</span>
+          low-q   <span style="color: #842879;">(</span>filter #<span style="color: #9A7500;">(</span>&gt; median' <span style="color: #842879;">%</span><span style="color: #9A7500;">)</span> coll'<span style="color: #842879;">)</span>
+          high-q  <span style="color: #842879;">(</span>filter #<span style="color: #9A7500;">(</span>&lt; median' <span style="color: #842879;">%</span><span style="color: #9A7500;">)</span> coll'<span style="color: #842879;">)</span>
+          mean'   <span style="color: #842879;">(</span>mean coll' count'<span style="color: #842879;">)</span><span style="color: #AC4426;">]</span>
+      <span style="color: #AC4426;">{</span><span style="color: #97365B;">:min</span>  <span style="color: #842879;">(</span>first coll'<span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:max</span>  <span style="color: #842879;">(</span>last coll'<span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:mode</span> <span style="color: #842879;">(</span>ffirst <span style="color: #9A7500;">(</span>sort-by second &gt; <span style="color: #29838D;">(</span>frequencies coll'<span style="color: #29838D;">)</span><span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:mean</span> mean'
+       <span style="color: #97365B;">:q1</span>   <span style="color: #842879;">(</span>median low-q <span style="color: #9A7500;">(</span>count low-q<span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:q2</span>   median'
+       <span style="color: #97365B;">:q3</span>   <span style="color: #842879;">(</span>median high-q <span style="color: #9A7500;">(</span>count high-q<span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:sd</span>   <span style="color: #842879;">(</span><span style="color: #9A7500;">Math</span>/sqrt <span style="color: #9A7500;">(</span>mean <span style="color: #29838D;">(</span>map #<span style="color: #80a880;">(</span><span style="color: #9A7500;">Math</span>/pow <span style="color: #887070;">(</span>- <span style="color: #842879;">%</span> mean'<span style="color: #887070;">)</span> <span style="color: #97365B; font-weight: bold;">2</span><span style="color: #80a880;">)</span> coll'<span style="color: #29838D;">)</span>
+                              count'<span style="color: #9A7500;">)</span><span style="color: #842879;">)</span><span style="color: #AC4426;">}</span><span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">def</span> <span style="color: #842879;">sample</span> <span style="color: #97365B;">(</span><span style="color: #3B6EA8;">-&gt;&gt;</span> #<span style="color: #4F894C;">(</span>rand-int <span style="color: #97365B; font-weight: bold;">1000</span><span style="color: #4F894C;">)</span> <span style="color: #4F894C;">(</span>repeatedly <span style="color: #97365B; font-weight: bold;">1000</span><span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">def</span> <span style="color: #842879;">wsample</span> <span style="color: #97365B;">[</span><span style="color: #97365B; font-weight: bold;">7</span> <span style="color: #97365B; font-weight: bold;">7</span> <span style="color: #97365B; font-weight: bold;">31</span> <span style="color: #97365B; font-weight: bold;">31</span> <span style="color: #97365B; font-weight: bold;">47</span> <span style="color: #97365B; font-weight: bold;">75</span> <span style="color: #97365B; font-weight: bold;">87</span> <span style="color: #97365B; font-weight: bold;">115</span> <span style="color: #97365B; font-weight: bold;">116</span> <span style="color: #97365B; font-weight: bold;">119</span> <span style="color: #97365B; font-weight: bold;">119</span> <span style="color: #97365B; font-weight: bold;">155</span> <span style="color: #97365B; font-weight: bold;">177</span><span style="color: #97365B;">]</span><span style="color: #3B6EA8;">)</span>
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">def</span> <span style="color: #842879;">dogs-sample</span> <span style="color: #97365B;">[</span><span style="color: #97365B; font-weight: bold;">600</span> <span style="color: #97365B; font-weight: bold;">470</span> <span style="color: #97365B; font-weight: bold;">170</span> <span style="color: #97365B; font-weight: bold;">430</span> <span style="color: #97365B; font-weight: bold;">300</span><span style="color: #97365B;">]</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span>naive-summary dogs-sample<span style="color: #3B6EA8;">)</span>
+<span style="color: #3B6EA8;">(</span>naive-summary sample<span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">def</span> <span style="color: #842879;">sample</span> <span style="color: #97365B;">(</span><span style="color: #3B6EA8;">doall</span> <span style="color: #4F894C;">(</span><span style="color: #3B6EA8;">-&gt;&gt;</span> #<span style="color: #AC4426;">(</span>rand-int <span style="color: #97365B; font-weight: bold;">1000</span><span style="color: #AC4426;">)</span> <span style="color: #AC4426;">(</span>repeatedly <span style="color: #97365B; font-weight: bold;">100000</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">def</span> <span style="color: #842879;">vsample</span> <span style="color: #97365B;">(</span>vec sample<span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">defn</span> <span style="color: #29838D;">pmean</span> <span style="color: #97365B;">[</span>xs<span style="color: #97365B;">]</span>
+  <span style="color: #97365B;">(</span>/ <span style="color: #4F894C;">(</span><span style="color: #9A7500;">r</span>/fold + xs<span style="color: #4F894C;">)</span> <span style="color: #4F894C;">(</span>count xs<span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">defn</span> <span style="color: #29838D;">pfreq</span> <span style="color: #97365B;">[</span>xs<span style="color: #97365B;">]</span>
+  <span style="color: #97365B;">(</span><span style="color: #9A7500;">r</span>/fold <span style="color: #4F894C;">(</span><span style="color: #3B6EA8;">fn</span>
+            <span style="color: #AC4426;">(</span><span style="color: #842879;">[]</span> <span style="color: #842879;">{}</span><span style="color: #AC4426;">)</span>
+            <span style="color: #AC4426;">(</span><span style="color: #842879;">[</span>a b<span style="color: #842879;">]</span> <span style="color: #842879;">(</span>merge-with +<span style="color: #842879;">)</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">)</span>
+          <span style="color: #4F894C;">(</span><span style="color: #3B6EA8;">fn</span> <span style="color: #AC4426;">[</span>acc x<span style="color: #AC4426;">]</span>
+            <span style="color: #AC4426;">(</span>update acc x <span style="color: #842879;">(</span>fnil inc <span style="color: #97365B; font-weight: bold;">0</span><span style="color: #842879;">)</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">)</span>
+          xs<span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">defn</span> <span style="color: #29838D;">pvariance</span> <span style="color: #97365B;">[</span>mean xs<span style="color: #97365B;">]</span>
+  <span style="color: #97365B;">(</span>/ <span style="color: #4F894C;">(</span><span style="color: #9A7500;">r</span>/fold + #<span style="color: #AC4426;">(</span><span style="color: #3B6EA8;">let</span> <span style="color: #842879;">[</span>m-x <span style="color: #9A7500;">(</span>- mean <span style="color: #842879;">%2</span><span style="color: #9A7500;">)</span><span style="color: #842879;">]</span>
+                  <span style="color: #842879;">(</span>+ <span style="color: #842879;">%1</span> <span style="color: #9A7500;">(</span>* m-x m-x<span style="color: #9A7500;">)</span><span style="color: #842879;">)</span><span style="color: #AC4426;">)</span> xs<span style="color: #4F894C;">)</span>
+     <span style="color: #4F894C;">(</span>count xs<span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">defn</span> <span style="color: #29838D;">psummary</span> <span style="color: #97365B;">[</span>coll<span style="color: #97365B;">]</span>
+  <span style="color: #97365B;">(</span><span style="color: #3B6EA8;">letfn</span> <span style="color: #4F894C;">[</span><span style="color: #AC4426;">(</span>median <span style="color: #842879;">[</span>xs cxs<span style="color: #842879;">]</span> <span style="color: #842879;">(</span>nth xs <span style="color: #9A7500;">(</span>quot cxs <span style="color: #97365B; font-weight: bold;">2</span><span style="color: #9A7500;">)</span><span style="color: #842879;">)</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">]</span>
+    <span style="color: #4F894C;">(</span><span style="color: #3B6EA8;">let</span> <span style="color: #AC4426;">[</span>coll'   <span style="color: #842879;">(</span>sort coll<span style="color: #842879;">)</span>
+          median' <span style="color: #842879;">(</span>median coll' <span style="color: #9A7500;">(</span>count coll'<span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+          low-q   <span style="color: #842879;">(</span>filter #<span style="color: #9A7500;">(</span>&gt; median' <span style="color: #842879;">%</span><span style="color: #9A7500;">)</span> coll'<span style="color: #842879;">)</span>
+          high-q  <span style="color: #842879;">(</span>filter #<span style="color: #9A7500;">(</span>&lt; median' <span style="color: #842879;">%</span><span style="color: #9A7500;">)</span> coll'<span style="color: #842879;">)</span>
+          mean'   <span style="color: #842879;">(</span>pmean coll'<span style="color: #842879;">)</span><span style="color: #AC4426;">]</span>
+      <span style="color: #AC4426;">{</span><span style="color: #97365B;">:min</span>  <span style="color: #842879;">(</span>first coll'<span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:max</span>  <span style="color: #842879;">(</span>last coll'<span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:mode</span> <span style="color: #842879;">(</span>ffirst <span style="color: #9A7500;">(</span>sort-by second &gt; <span style="color: #29838D;">(</span>pfreq coll'<span style="color: #29838D;">)</span><span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:mean</span> mean'
+       <span style="color: #97365B;">:q1</span>   <span style="color: #842879;">(</span>median low-q <span style="color: #9A7500;">(</span>count low-q<span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:q2</span>   median'
+       <span style="color: #97365B;">:q3</span>   <span style="color: #842879;">(</span>median high-q <span style="color: #9A7500;">(</span>count high-q<span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+       <span style="color: #97365B;">:sd</span>   <span style="color: #842879;">(</span><span style="color: #9A7500;">Math</span>/sqrt <span style="color: #9A7500;">(</span>pvariance mean' coll<span style="color: #9A7500;">)</span><span style="color: #842879;">)</span><span style="color: #AC4426;">}</span><span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+{:min 1, :max 999, :mean 507377/1000}
+</pre>
+</div>
+</div>
+
+
+<div id="outline-container-org589caa9" class="outline-3">
+<h3 id="org589caa9">Using clojure.core.reducers/fold</h3>
+<div class="outline-text-3" id="text-org589caa9">
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #3B6EA8;">(</span>require <span style="color: #97365B;">[</span>clojure.core.reducers <span style="color: #97365B;">:as</span> r<span style="color: #97365B;">]</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">def</span> <span style="color: #842879;">default-stats</span>
+  <span style="color: #97365B;">{</span><span style="color: #97365B;">:max</span> <span style="color: #9A7500;">Double</span>/NEGATIVE_INFINITY
+   <span style="color: #97365B;">:min</span> <span style="color: #9A7500;">Double</span>/POSITIVE_INFINITY
+   <span style="color: #97365B;">:sum</span> <span style="color: #97365B; font-weight: bold;">0</span><span style="color: #97365B;">}</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">defn</span> <span style="color: #29838D;">stats-reducing</span> <span style="color: #97365B;">[</span>acc x<span style="color: #97365B;">]</span>
+  <span style="color: #97365B;">(</span><span style="color: #3B6EA8;">cond-&gt;</span> acc
+    <span style="color: #4F894C;">(</span>&lt; x <span style="color: #AC4426;">(</span><span style="color: #97365B;">:min</span> acc<span style="color: #AC4426;">)</span><span style="color: #4F894C;">)</span> <span style="color: #4F894C;">(</span>assoc <span style="color: #97365B;">:min</span> x<span style="color: #4F894C;">)</span>
+    <span style="color: #4F894C;">(</span>&gt; x <span style="color: #AC4426;">(</span><span style="color: #97365B;">:max</span> acc<span style="color: #AC4426;">)</span><span style="color: #4F894C;">)</span> <span style="color: #4F894C;">(</span>assoc <span style="color: #97365B;">:max</span> x<span style="color: #4F894C;">)</span>
+    <span style="color: #97365B;">:always</span>          <span style="color: #4F894C;">(</span>update <span style="color: #97365B;">:sum</span> #<span style="color: #AC4426;">(</span>+ x <span style="color: #842879;">%</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">defn</span> <span style="color: #29838D;">stats-combining</span>
+  <span style="color: #97365B;">(</span><span style="color: #4F894C;">[]</span> default-stats<span style="color: #97365B;">)</span>
+  <span style="color: #97365B;">(</span><span style="color: #4F894C;">[</span>a b<span style="color: #4F894C;">]</span> <span style="color: #4F894C;">{</span><span style="color: #97365B;">:min</span> <span style="color: #AC4426;">(</span>min <span style="color: #842879;">(</span><span style="color: #97365B;">:min</span> a<span style="color: #842879;">)</span> <span style="color: #842879;">(</span><span style="color: #97365B;">:min</span> b<span style="color: #842879;">)</span><span style="color: #AC4426;">)</span>
+          <span style="color: #97365B;">:max</span> <span style="color: #AC4426;">(</span>max <span style="color: #842879;">(</span><span style="color: #97365B;">:max</span> a<span style="color: #842879;">)</span> <span style="color: #842879;">(</span><span style="color: #97365B;">:max</span> b<span style="color: #842879;">)</span><span style="color: #AC4426;">)</span>
+          <span style="color: #97365B;">:sum</span> <span style="color: #AC4426;">(</span>+  <span style="color: #842879;">(</span><span style="color: #97365B;">:sum</span> a<span style="color: #842879;">)</span> <span style="color: #842879;">(</span><span style="color: #97365B;">:sum</span> b<span style="color: #842879;">)</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">}</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">defn</span> <span style="color: #29838D;">parallel-summary</span> <span style="color: #97365B;">[</span>coll<span style="color: #97365B;">]</span>
+  <span style="color: #97365B;">(</span><span style="color: #3B6EA8;">let</span> <span style="color: #4F894C;">[</span>stats' <span style="color: #AC4426;">(</span><span style="color: #9A7500;">r</span>/fold stats-combining
+                       stats-reducing
+                       coll<span style="color: #AC4426;">)</span>
+        mean <span style="color: #AC4426;">(</span>/ <span style="color: #842879;">(</span><span style="color: #97365B;">:sum</span> stats'<span style="color: #842879;">)</span>
+                <span style="color: #842879;">(</span>count coll<span style="color: #842879;">)</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">]</span>
+    <span style="color: #4F894C;">(</span>assoc stats' <span style="color: #97365B;">:mean</span> mean<span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span>parallel-summary sample<span style="color: #3B6EA8;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+{:max 999, :min 1, :sum 507377, :mean 507377/1000}
+</pre>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-org62854a8" class="outline-2">
+<h2 id="org62854a8">Benchmark section (TBR)</h2>
+<div class="outline-text-2" id="text-org62854a8">
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">def</span> <span style="color: #842879;">bresults</span>
+  <span style="color: #97365B;">(</span><span style="color: #3B6EA8;">doall</span>
+   <span style="color: #4F894C;">(</span><span style="color: #3B6EA8;">for</span> <span style="color: #AC4426;">[</span>num      <span style="color: #842879;">(</span>map long <span style="color: #9A7500;">[</span><span style="color: #97365B; font-weight: bold;">10</span> <span style="color: #97365B; font-weight: bold;">1e2</span> <span style="color: #97365B; font-weight: bold;">1e3</span> <span style="color: #97365B; font-weight: bold;">1e4</span> <span style="color: #97365B; font-weight: bold;">1e5</span> <span style="color: #97365B; font-weight: bold;">1e6</span> <span style="color: #97365B; font-weight: bold;">1e7</span> <span style="color: #97365B; font-weight: bold;">1e8</span><span style="color: #9A7500;">]</span><span style="color: #842879;">)</span>
+         <span style="color: #842879;">[</span>f wrap<span style="color: #842879;">]</span> <span style="color: #842879;">[</span><span style="color: #9A7500;">[</span>#'naive-summary identity<span style="color: #9A7500;">]</span>
+                   <span style="color: #9A7500;">[</span>#'parallel-summary vec<span style="color: #9A7500;">]</span><span style="color: #842879;">]</span><span style="color: #AC4426;">]</span>
+     <span style="color: #AC4426;">(</span>assoc <span style="color: #842879;">(</span>benchmark f <span style="color: #9A7500;">(</span>wrap <span style="color: #29838D;">(</span>repeatedly num #<span style="color: #80a880;">(</span>rand-int <span style="color: #97365B; font-weight: bold;">1000</span><span style="color: #80a880;">)</span><span style="color: #29838D;">)</span><span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+            <span style="color: #97365B;">:count</span> num<span style="color: #AC4426;">)</span><span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #3B6EA8;">(</span>require '<span style="color: #97365B;">[</span>wiz.lib.data <span style="color: #97365B;">:refer</span> <span style="color: #4F894C;">[</span>vega-&gt;svg<span style="color: #4F894C;">]</span><span style="color: #97365B;">]</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span>vega-&gt;svg
+ <span style="color: #4F894C;">"benchmark"</span>
+ <span style="color: #97365B;">{</span><span style="color: #97365B;">:data</span>  <span style="color: #4F894C;">{</span><span style="color: #97365B;">:values</span> bresults<span style="color: #4F894C;">}</span>
+  <span style="color: #97365B;">:mark</span>  <span style="color: #97365B;">:rect</span>
+  <span style="color: #97365B;">:width</span> <span style="color: #97365B; font-weight: bold;">300</span>
+  <span style="color: #97365B;">:encoding</span>
+  <span style="color: #4F894C;">{</span><span style="color: #97365B;">:x</span>     <span style="color: #AC4426;">{</span><span style="color: #97365B;">:field</span> <span style="color: #97365B;">:count</span> <span style="color: #97365B;">:type</span> <span style="color: #97365B;">:ordinal</span>
+           <span style="color: #97365B;">:axis</span> <span style="color: #842879;">{</span><span style="color: #97365B;">:title</span> <span style="color: #4F894C;">"Collection size"</span><span style="color: #842879;">}</span><span style="color: #AC4426;">}</span>
+   <span style="color: #97365B;">:y</span>     <span style="color: #AC4426;">{</span><span style="color: #97365B;">:field</span> <span style="color: #97365B;">:time</span> <span style="color: #97365B;">:type</span> <span style="color: #97365B;">:quantitative</span>
+           <span style="color: #97365B;">:axis</span> <span style="color: #842879;">{</span><span style="color: #97365B;">:title</span> <span style="color: #4F894C;">"time (&#181;s)"</span><span style="color: #842879;">}</span>
+           <span style="color: #97365B;">:scale</span> <span style="color: #842879;">{</span><span style="color: #97365B;">:type</span> <span style="color: #97365B;">:log</span><span style="color: #842879;">}</span><span style="color: #AC4426;">}</span>
+   <span style="color: #97365B;">:color</span> <span style="color: #AC4426;">{</span><span style="color: #97365B;">:field</span> <span style="color: #97365B;">:fname</span> <span style="color: #97365B;">:type</span> <span style="color: #97365B;">:nominal</span><span style="color: #AC4426;">}</span><span style="color: #4F894C;">}</span><span style="color: #97365B;">}</span><span style="color: #3B6EA8;">)</span>
+</pre>
+</div>
+
+
+<div class="figure">
+<p><object type="image/svg+xml" data="images/benchmark.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+
+
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #3B6EA8;">(</span><span style="color: #3B6EA8;">def</span> <span style="color: #842879;">rate-of-improvement</span>
+  <span style="color: #97365B;">(</span><span style="color: #3B6EA8;">-&gt;&gt;</span> bresults
+       <span style="color: #4F894C;">(</span>partition <span style="color: #97365B; font-weight: bold;">2</span><span style="color: #4F894C;">)</span>
+       <span style="color: #4F894C;">(</span>map #<span style="color: #AC4426;">(</span>hash-map
+              <span style="color: #97365B;">:times</span> <span style="color: #842879;">(</span>/ <span style="color: #9A7500;">(</span><span style="color: #97365B;">:time</span> <span style="color: #29838D;">(</span>first <span style="color: #842879;">%</span><span style="color: #29838D;">)</span><span style="color: #9A7500;">)</span>
+                        <span style="color: #9A7500;">(</span><span style="color: #97365B;">:time</span> <span style="color: #29838D;">(</span>second <span style="color: #842879;">%</span><span style="color: #29838D;">)</span><span style="color: #9A7500;">)</span><span style="color: #842879;">)</span>
+              <span style="color: #97365B;">:count</span> <span style="color: #842879;">(</span><span style="color: #97365B;">:count</span> <span style="color: #9A7500;">(</span>first <span style="color: #842879;">%</span><span style="color: #9A7500;">)</span><span style="color: #842879;">)</span><span style="color: #AC4426;">)</span><span style="color: #4F894C;">)</span><span style="color: #97365B;">)</span><span style="color: #3B6EA8;">)</span>
+
+<span style="color: #3B6EA8;">(</span>vega-&gt;svg
+ <span style="color: #4F894C;">"rate-of-improvement"</span>
+ <span style="color: #97365B;">{</span><span style="color: #97365B;">:data</span> <span style="color: #4F894C;">{</span><span style="color: #97365B;">:values</span> rate-of-improvement<span style="color: #4F894C;">}</span>
+  <span style="color: #97365B;">:mark</span> <span style="color: #4F894C;">{</span><span style="color: #97365B;">:type</span> <span style="color: #97365B;">:bar</span><span style="color: #4F894C;">}</span>
+  <span style="color: #97365B;">:width</span> <span style="color: #97365B; font-weight: bold;">300</span>
+  <span style="color: #97365B;">:encoding</span>
+  <span style="color: #4F894C;">{</span><span style="color: #97365B;">:x</span>     <span style="color: #AC4426;">{</span><span style="color: #97365B;">:field</span> <span style="color: #97365B;">:count</span> <span style="color: #97365B;">:type</span> <span style="color: #97365B;">:ordinal</span>
+           <span style="color: #97365B;">:axis</span> <span style="color: #842879;">{</span><span style="color: #97365B;">:title</span> <span style="color: #4F894C;">"Collection size"</span><span style="color: #842879;">}</span><span style="color: #AC4426;">}</span>
+   <span style="color: #97365B;">:y</span>     <span style="color: #AC4426;">{</span><span style="color: #97365B;">:field</span> <span style="color: #97365B;">:times</span> <span style="color: #97365B;">:type</span> <span style="color: #97365B;">:quantitative</span>
+           <span style="color: #97365B;">:axis</span> <span style="color: #842879;">{</span><span style="color: #97365B;">:title</span> <span style="color: #4F894C;">"Times faster"</span>
+                  <span style="color: #97365B;">:format</span> <span style="color: #4F894C;">".2"</span><span style="color: #842879;">}</span><span style="color: #AC4426;">}</span><span style="color: #4F894C;">}</span><span style="color: #97365B;">}</span><span style="color: #3B6EA8;">)</span>
+</pre>
+</div>
+
+
+<div class="figure">
+<p><object type="image/svg+xml" data="images/rate-of-improvement.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: 2020-01-28</p>
+<p class="author">Author: Vladimir Kotushenko</p>
+<p class="date">Created: 2020-03-07 Sat 17:16</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
