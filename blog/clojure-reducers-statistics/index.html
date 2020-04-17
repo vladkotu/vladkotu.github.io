@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <title>Practicing SQL with MySQL test employees database - Ambient Programming</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="author" content="Vladimir Kotushenko" />
+    <meta name="description" content="Find some insigts from relational database using SQL" />
+    <meta name="keywords" content="SQL, MySQL, data mining" />
+    <link rel="stylesheet" href="/media/css/main.css" type="text/css">
+    <link rel="stylesheet" type="text/css" href="/media/prism/prism.css">
+    <!-- <link rel="stylesheet" type="text/css" href="/media/google-code-prettify/prettify.css"> -->
+    <!-- <link rel="stylesheet" type="text/css" href="/media/google-code-prettify/skins/sunburst.css"> -->
+    <!-- <script type="text/javascript" src="/media/google-code-prettify/prettify.js"></script> -->
+    <!-- <script type="text/javascript" src="/media/google-code-prettify/lang-clj.js"></script> -->
+
+  </head>
+
+  <body class="container">
+    <div>
+      <header class="masthead">
+        <h1 class="masthead-title"><a href="/">Ambient Programming</a></h1>
+        <p>Clojure reveals true ease</p>
+        <ul>
+          <li><a href="/blog/">Blog</a></li>
+          <li><a href="/target/">Target</a></li>
+          <li><a href="/tags/">Tags</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="https://github.com/vladkotu/">GitHub</a></li>
+          <li><a href="/rss.xml">RSS</a></li>
+        </ul>
+        <!-- <form method="get" id="searchform" action="//www.google.com/search"> -->
+        <!-- <input type="text" class="field" name="q" id="s" placeholder="Search"> -->
+        <!-- <input type="hidden" name="as_sitesearch" value="vladkotu.github.io"> -->
+        <!-- </form> -->
+      </header>
+    </div>
+
+<div>
+<div class="post">
+<h1>Practicing SQL with MySQL test employees database</h1>
+
+<div id="outline-container-org1a1c5f7" class="outline-2">
+<h2 id="org1a1c5f7">What insights about organization could be found in this data set?</h2>
+<div class="outline-text-2" id="text-org1a1c5f7">
+<p>
+Browsing on internet, searching for a test database i can practice SQL skills on , i found
+<a href="https://dev.mysql.com/doc/employee/en/employees-introduction.html">this MySQL</a> test database, that looks good for a given purpose.
+</p>
+
+
+<p>
+It's a employees database with their titles, salaries and departments also includes some historical data in.
+</p>
+
+<p>
+Here is schema from <a href="https://dev.mysql.com/doc/employee/en/sakila-structure.html">dev.mysql.com</a>:
+</p>
+
+
+<div class="figure">
+<p><img src="/assets/blog/clojure-reducers-statistics/employees-schema.png" alt="employees-schema.png" width="300px" />
+</p>
+</div>
+
+
+<p>
+Let's assume, that at high level of degree, organizations are about hierarchies.
+And hierarchies are about titles and salaries.
+</p>
+</div>
+
+<div id="outline-container-org6229c92" class="outline-4">
+<h4 id="org6229c92">What titles exists in organization?</h4>
+<div class="outline-text-4" id="text-org6229c92">
+<p>
+At first look to how many titles are recorded may confuse:
+</p>
+<div class="org-src-container">
+<pre class="src src-sql">SELECT count(*) FROM titles
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">count(*)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">443308</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Way too much anyone could imagine, but let's look closer:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT title, COUNT(*) FROM titles GROUP BY title
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">title</th>
+<th scope="col" class="org-right">COUNT(*)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Senior Engineer</td>
+<td class="org-right">97750</td>
+</tr>
+
+<tr>
+<td class="org-left">Staff</td>
+<td class="org-right">107391</td>
+</tr>
+
+<tr>
+<td class="org-left">Engineer</td>
+<td class="org-right">115003</td>
+</tr>
+
+<tr>
+<td class="org-left">Senior Staff</td>
+<td class="org-right">92853</td>
+</tr>
+
+<tr>
+<td class="org-left">Assistant Engineer</td>
+<td class="org-right">15128</td>
+</tr>
+
+<tr>
+<td class="org-left">Technique Leader</td>
+<td class="org-right">15159</td>
+</tr>
+
+<tr>
+<td class="org-left">Manager</td>
+<td class="org-right">24</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+That's because every record not exactly a title by essence, but rather record of fact
+of occupation of title by employee....
+</p>
+
+
+<div class="org-src-container">
+<pre class="src src-sql">SELECT DISTINCT title FROM titles
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">title</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Senior Engineer</td>
+</tr>
+
+<tr>
+<td class="org-left">Staff</td>
+</tr>
+
+<tr>
+<td class="org-left">Engineer</td>
+</tr>
+
+<tr>
+<td class="org-left">Senior Staff</td>
+</tr>
+
+<tr>
+<td class="org-left">Assistant Engineer</td>
+</tr>
+
+<tr>
+<td class="org-left">Technique Leader</td>
+</tr>
+
+<tr>
+<td class="org-left">Manager</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+So it's 7 titles in total exists, that are available for occupation for those,
+who seeking fame and respect.
+</p>
+
+<p>
+Despite intuitively some titles seems to be more respectfully than others,
+an tree of hierarchy isn't absolutely clear for now. 
+</p>
+
+<p>
+Let's continue investigate: 
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc8c1a1e" class="outline-4">
+<h4 id="orgc8c1a1e">How many active managers there are in company?</h4>
+<div class="outline-text-4" id="text-orgc8c1a1e">
+<div class="org-src-container">
+<pre class="src src-sql">SELECT count(*) FROM dept_manager WHERE to_date &gt; NOW()
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">count(*)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">9</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-org0c94391" class="outline-4">
+<h4 id="org0c94391">How many departments are exists?</h4>
+<div class="outline-text-4" id="text-org0c94391">
+<div class="org-src-container">
+<pre class="src src-sql">SELECT count(*) FROM departments
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">count(*)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">9</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Alright, than - every department holds by exactly one manager.
+</p>
+
+<p>
+So probably at this point one can guess, managers are topmost title?
+</p>
+
+<p>
+How about to check it from point of money?
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge0c962b" class="outline-4">
+<h4 id="orge0c962b">Who are those manager, their departments, and salaries?</h4>
+<div class="outline-text-4" id="text-orge0c962b">
+<div class="org-src-container">
+<pre class="src src-sql" id="orgc492bf3">SELECT
+    e.first_name, e.last_name, e.gender, d.dept_name, s.salary
+FROM
+    dept_manager AS dm
+    LEFT JOIN employees AS e ON e.emp_no = dm.emp_no
+    LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+    LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+    LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+WHERE
+    dm.to_date &gt; now() AND s.to_date &gt; now()
+ORDER BY
+    s.salary DESC
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">first_name</th>
+<th scope="col" class="org-left">last_name</th>
+<th scope="col" class="org-left">gender</th>
+<th scope="col" class="org-left">dept_name</th>
+<th scope="col" class="org-right">salary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Vishwani</td>
+<td class="org-left">Minakawa</td>
+<td class="org-left">M</td>
+<td class="org-left">Marketing</td>
+<td class="org-right">106491</td>
+</tr>
+
+<tr>
+<td class="org-left">Hauke</td>
+<td class="org-left">Zhang</td>
+<td class="org-left">M</td>
+<td class="org-left">Sales</td>
+<td class="org-right">101987</td>
+</tr>
+
+<tr>
+<td class="org-left">Isamu</td>
+<td class="org-left">Legleitner</td>
+<td class="org-left">F</td>
+<td class="org-left">Finance</td>
+<td class="org-right">83457</td>
+</tr>
+
+<tr>
+<td class="org-left">Hilary</td>
+<td class="org-left">Kambil</td>
+<td class="org-left">F</td>
+<td class="org-left">Research</td>
+<td class="org-right">79393</td>
+</tr>
+
+<tr>
+<td class="org-left">Leon</td>
+<td class="org-left">DasSarma</td>
+<td class="org-left">F</td>
+<td class="org-left">Development</td>
+<td class="org-right">74510</td>
+</tr>
+
+<tr>
+<td class="org-left">Dung</td>
+<td class="org-left">Pesch</td>
+<td class="org-left">M</td>
+<td class="org-left">Quality Management</td>
+<td class="org-right">72876</td>
+</tr>
+
+<tr>
+<td class="org-left">Karsten</td>
+<td class="org-left">Sigstam</td>
+<td class="org-left">F</td>
+<td class="org-left">Human Resources</td>
+<td class="org-right">65400</td>
+</tr>
+
+<tr>
+<td class="org-left">Yuchang</td>
+<td class="org-left">Weedman</td>
+<td class="org-left">M</td>
+<td class="org-left">Customer Service</td>
+<td class="org-right">58745</td>
+</tr>
+
+<tr>
+<td class="org-left">Oscar</td>
+<td class="org-left">Ghazalie</td>
+<td class="org-left">M</td>
+<td class="org-left">Production</td>
+<td class="org-right">56654</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-orgea8fa65" class="outline-4">
+<h4 id="orgea8fa65">How many employees currently are working in every department and what their average salary?</h4>
+<div class="outline-text-4" id="text-orgea8fa65">
+<div class="org-src-container">
+<pre class="src src-sql">SELECT
+    d.dept_no, d.dept_name, count(*) AS emp_count, AVG(s.salary) as salary
+FROM
+    employees AS e
+    LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+    LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+    LEFT JOIN titles AS t ON t.emp_no = e.emp_no
+    LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+WHERE
+    de.to_date &gt; NOW()
+    AND t.to_date &gt; NOW()
+    AND s.to_date &gt; NOW()
+GROUP BY
+    d.dept_name
+ORDER BY
+    emp_count
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">dept_no</th>
+<th scope="col" class="org-left">dept_name</th>
+<th scope="col" class="org-right">emp_count</th>
+<th scope="col" class="org-right">salary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">d002</td>
+<td class="org-left">Finance</td>
+<td class="org-right">12437</td>
+<td class="org-right">78559.9370</td>
+</tr>
+
+<tr>
+<td class="org-left">d003</td>
+<td class="org-left">Human Resources</td>
+<td class="org-right">12898</td>
+<td class="org-right">63921.8998</td>
+</tr>
+
+<tr>
+<td class="org-left">d006</td>
+<td class="org-left">Quality Management</td>
+<td class="org-right">14546</td>
+<td class="org-right">65441.9934</td>
+</tr>
+
+<tr>
+<td class="org-left">d001</td>
+<td class="org-left">Marketing</td>
+<td class="org-right">14842</td>
+<td class="org-right">80058.8488</td>
+</tr>
+
+<tr>
+<td class="org-left">d008</td>
+<td class="org-left">Research</td>
+<td class="org-right">15441</td>
+<td class="org-right">67913.3750</td>
+</tr>
+
+<tr>
+<td class="org-left">d009</td>
+<td class="org-left">Customer Service</td>
+<td class="org-right">17569</td>
+<td class="org-right">67285.2302</td>
+</tr>
+
+<tr>
+<td class="org-left">d007</td>
+<td class="org-left">Sales</td>
+<td class="org-right">37701</td>
+<td class="org-right">88852.9695</td>
+</tr>
+
+<tr>
+<td class="org-left">d004</td>
+<td class="org-left">Production</td>
+<td class="org-right">53304</td>
+<td class="org-right">67843.3020</td>
+</tr>
+
+<tr>
+<td class="org-left">d005</td>
+<td class="org-left">Development</td>
+<td class="org-right">61386</td>
+<td class="org-right">67657.9196</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-orge64abc0" class="outline-4">
+<h4 id="orge64abc0">What is average salary by gender?</h4>
+<div class="outline-text-4" id="text-orge64abc0">
+<div class="org-src-container">
+<pre class="src src-sql">SELECT
+  e.gender, AVG(s.salary) as avg_salary
+FROM
+    dept_manager AS dm
+    LEFT JOIN employees AS e ON e.emp_no = dm.emp_no
+    LEFT JOIN dept_emp AS de ON e.emp_no = de.emp_no
+    LEFT JOIN departments AS d ON d.dept_no = de.dept_no
+    LEFT JOIN titles AS t ON t.emp_no = e.emp_no
+    LEFT JOIN salaries AS s ON s.emp_no = e.emp_no
+WHERE
+    dm.to_date &gt; NOW()
+    AND t.to_date &gt; NOW()
+    AND s.to_date &gt; NOW()
+GROUP BY e.gender
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">gender</th>
+<th scope="col" class="org-right">avg_salary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">M</td>
+<td class="org-right">79350.6000</td>
+</tr>
+
+<tr>
+<td class="org-left">F</td>
+<td class="org-right">75690.0000</td>
+</tr>
+
+<tr>
+<td class="org-left">%</td>
+<td class="org-right">4.61</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-org70eae42" class="outline-4">
+<h4 id="org70eae42">Distribution of salaries across departments and roles:&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ARCHIVE">ARCHIVE</span></span></h4>
+</div>
+</div>
+
+</div>
+</div>
+    <div>
+      <div class="post-meta">
+        <span title="post date" class="post-info">2020-01-28</span>
+        <span title="last modification date" class="post-info">2020-04-17</span>
+        <span title="tags" class="post-info"><a href="/tags/learning/">Learning</a>, <a href="/tags/beginners/">Beginners</a>, <a href="/tags/sql/">SQL</a>, <a href="/tags/mysql/">MySQL</a>, <a href="/tags/data-mining/">data mining</a></span>
+        <span title="author" class="post-info">Vladimir Kotushenko</span>
+      </div>
+      <section>
+        <h1>Comments</h1>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          //var disqus_developer = 1;
+          var disqus_identifier = "/blog/clojure-reducers-statistics";
+          var disqus_url = "http://vladkotu.github.io/blog/clojure-reducers-statistics";
+          var disqus_shortname = 'vladkotu';
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="//disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </section>
+      <script src="//code.jquery.com/jquery-latest.min.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="/media/js/main.js"></script>
+      <script type="text/javascript" src="/media/prism/prism.js"></script>
+      <div class="footer">
+        <p>Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 26.x (<a href="http://orgmode.org">Org mode</a> 9.x)</p>
+        <p>
+          Copyright &copy; 2012 - <span id="footerYear"></span> <a href="mailto:volodymyr &lt;dot&gt; kotushenko &lt;at&gt; gmail &lt;dot&gt; com">Vladimir Kotushenko</a>
+          &nbsp;&nbsp;-&nbsp;&nbsp;
+          Powered by <a href="https://github.com/kelvinh/org-page" target="_blank">org-page</a>
+          <script type="text/javascript">document.getElementById("footerYear").innerHTML = (new Date()).getFullYear();</script>
+        </p>
+      </div>
+    </div>
+
+  </body>
+</html>

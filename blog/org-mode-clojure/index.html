@@ -40,17 +40,17 @@
 <div class="post">
 <h1>Org-mode and Clojure</h1>
 
-<div id="outline-container-orgf2f5760" class="outline-2">
-<h2 id="orgf2f5760">Org Clojure</h2>
-<div class="outline-text-2" id="text-orgf2f5760">
+<div id="outline-container-org094edd3" class="outline-2">
+<h2 id="org094edd3">Org Clojure</h2>
+<div class="outline-text-2" id="text-org094edd3">
 <p>
 This is going to be examples of how clojure could be used from org-mode
 </p>
 </div>
 
-<div id="outline-container-orgc8f7efd" class="outline-3">
-<h3 id="orgc8f7efd">Plotting</h3>
-<div class="outline-text-3" id="text-orgc8f7efd">
+<div id="outline-container-org273c529" class="outline-3">
+<h3 id="org273c529">Plotting</h3>
+<div class="outline-text-3" id="text-org273c529">
 <p>
 Is this possible to reproduce the case, <a href="https://stardiviner.github.io/Blog/Clojure-Plotting-to-Org-inline-image-in-ob-clojure.html">described in this article</a> ?
 And add Vega charts to list of demos.
@@ -58,9 +58,9 @@ And add Vega charts to list of demos.
 </div>
 </div>
 
-<div id="outline-container-org52c034c" class="outline-3">
-<h3 id="org52c034c">Incanter</h3>
-<div class="outline-text-3" id="text-org52c034c">
+<div id="outline-container-orgae2f9ac" class="outline-3">
+<h3 id="orgae2f9ac">Incanter</h3>
+<div class="outline-text-3" id="text-orgae2f9ac">
 <div class="org-src-container">
 <pre class="src src-clojure">(use '(incanter core stats datasets charts io))
 (def hist (histogram (sample-normal 100)))
@@ -78,9 +78,9 @@ And add Vega charts to list of demos.
 </div>
 
 
-<div id="outline-container-org8308efa" class="outline-3">
-<h3 id="org8308efa">XCharts</h3>
-<div class="outline-text-3" id="text-org8308efa">
+<div id="outline-container-orge8076f0" class="outline-3">
+<h3 id="orge8076f0">XCharts</h3>
+<div class="outline-text-3" id="text-orge8076f0">
 <div class="org-src-container">
 <pre class="src src-clojure">(require '[com.hypirion.clj-xchart :as c])
 (def chart (c/xy-chart
@@ -116,9 +116,9 @@ And add Vega charts to list of demos.
 </div>
 </div>
 
-<div id="outline-container-orgba354c4" class="outline-3">
-<h3 id="orgba354c4">Gnuplots</h3>
-<div class="outline-text-3" id="text-orgba354c4">
+<div id="outline-container-org3e07ba7" class="outline-3">
+<h3 id="org3e07ba7">Gnuplots</h3>
+<div class="outline-text-3" id="text-org3e07ba7">
 <ul class="org-ul">
 <li>brew install gnuplots</li>
 </ul>
@@ -152,9 +152,9 @@ Sorry, your browser does not support SVG.</object>
 </div>
 </div>
 
-<div id="outline-container-orgfb52be4" class="outline-3">
-<h3 id="orgfb52be4">Vega, Vega lite wrappers</h3>
-<div class="outline-text-3" id="text-orgfb52be4">
+<div id="outline-container-org3cca156" class="outline-3">
+<h3 id="org3cca156">Vega, Vega lite wrappers</h3>
+<div class="outline-text-3" id="text-org3cca156">
 <p>
 Oz can view but not possible yet to export to svg programmatically
 However vega-cli tools could be used to convert Vega spec to any format
@@ -169,17 +169,14 @@ However vega-cli tools could be used to convert Vega spec to any format
 <pre class="src src-clojure">(require '[clojure.java.shell :as sh])
 (require '[clojure.data.json :as json])
 
-(defn temp-json-file [cnt]
+(defn temp-json-file
+  "helper function convert clj vega spec to json and store it as tmp file"
+  [content]
   (let [tmp-file (java.io.File/createTempFile "vega." ".json")]
     (.deleteOnExit tmp-file)
     (with-open [file (clojure.java.io/writer tmp-file)]
-      (json/write cnt file))
+      (json/write content file))
     (.getAbsolutePath tmp-file)))
-
-
-(require '[oz.core :as oz])
-
-(oz/start-server!)
 
 (defn play-data [&amp; names]
   (for [n names
@@ -197,15 +194,13 @@ However vega-cli tools could be used to convert Vega spec to any format
    :height   400
    :mark     "line"})
 
-(sh/sh "vl2svg" (temp-json-file line-plot) ".//assets/blog/org-mode-clojure/oz.svg")
-
-(oz/view! line-plot)
+(sh/sh "vl2svg" (temp-json-file line-plot) ".//assets/blog/org-mode-clojure/vega.svg")
 </pre>
 </div>
 
 
 <div class="figure">
-<p><object type="image/svg+xml" data="/assets/blog/org-mode-clojure/oz.svg" class="org-svg">
+<p><object type="image/svg+xml" data="/assets/blog/org-mode-clojure/vega.svg" class="org-svg">
 Sorry, your browser does not support SVG.</object>
 </p>
 </div>
@@ -226,7 +221,7 @@ Yes it is very possible!
     <div>
       <div class="post-meta">
         <span title="post date" class="post-info">2019-12-18</span>
-        <span title="last modification date" class="post-info">2020-01-24</span>
+        <span title="last modification date" class="post-info">2020-04-17</span>
         <span title="tags" class="post-info"><a href="/tags/clojure/">clojure</a>, <a href="/tags/beginner/">beginner</a>, <a href="/tags/org-mode/">org-mode</a>, <a href="/tags/plotting/">plotting</a></span>
         <span title="author" class="post-info">Vladimir Kotushenko</span>
       </div>

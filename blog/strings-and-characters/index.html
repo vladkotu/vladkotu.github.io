@@ -40,122 +40,146 @@
 <div class="post">
 <h1>Data munging with SF Bay Area Bike Share</h1>
 
-<div id="outline-container-orgb738482" class="outline-2">
-<h2 id="orgb738482">Imports and helpers.</h2>
-<div class="outline-text-2" id="text-orgb738482">
+<div id="outline-container-org4f9aacf" class="outline-2">
+<h2 id="org4f9aacf">Lib imports and helpers.</h2>
+<div class="outline-text-2" id="text-org4f9aacf">
 <div class="org-src-container">
-<pre class="src src-clojure" id="org5276cdc">  (require '[clojure.java.io]
-           '[clojure.data.csv]
-           '[clojure.data.json]
-           '[clojure.java.shell :as sh]
-           '[semantic-csv.core :as sc]
-           '[semantic-csv.transducers :as sct]
-           '[huri.core :as huri]
-           '[clojure.pprint :as pp]
-           '[net.cgrand.xforms :as x])
+<pre class="src src-clojure" id="org5bc6b3d">(use '[wiz.lib.data] :reload)
+(require '[clojure.java.io]
+         '[clojure.data.csv]
+         '[clojure.data.json]
+         '[clojure.java.shell :as sh]
+         '[semantic-csv.core :as sc]
+         '[semantic-csv.transducers :as sct]
+         '[huri.core :as huri]
+         '[clojure.pprint :as pp]
+         '[net.cgrand.xforms :as x])
 
-(defn dissoc-all [m keys] (reduce #(dissoc %1 %2) m keys))
-
-(defn take-last-str
-  ([n] (fn [s] (take-last-str n s)))
-  ([n s] (apply str (take-last n s))))
-
-(defn size [dt]
-  {:cols (count (first dt))
-   :rows (count dt)})
-
-(defn temp-json-file
+(defn export-vega-csv
   "helper function convert clj vega spec to json and store it as tmp file"
   [fname content]
   (let [tmp-file (java.io.File/createTempFile "tmp." ".json")]
     (.deleteOnExit tmp-file)
-    (with-open [file (clojure.java.io/writer tmp-file)]
-      (clojure.data.json/write content file))
+    (with-open [writer (clojure.java.io/writer tmp-file)]
+      (clojure.data.json/write content writer))
     (let [source (.getAbsolutePath tmp-file)
           dest   (str "./images/" fname ".svg")]
       (sh/sh "vl2svg" source dest))))
-
 </pre>
 </div>
 </div>
+</div>
 
+<div id="outline-container-org287090a" class="outline-2">
+<h2 id="org287090a">Look at 'stations.scv' dataset</h2>
+<div class="outline-text-2" id="text-org287090a">
+<p>
+Extract Raw data from csv, and observe first couple rows
+</p>
 
-<div id="outline-container-orga536d6b" class="outline-3">
-<h3 id="orga536d6b">Extract Raw data from csv, and observe first couple rows</h3>
-<div class="outline-text-3" id="text-orga536d6b">
 <div class="org-src-container">
-<pre class="src src-clojure">(with-open [reader (clojure.java.io/reader "./data/station.csv")]
-  (-&gt;&gt; (clojure.data.csv/read-csv reader)
-       (sequence
-        (comp
-         (sct/remove-comments)
-         (sct/mappify)))
-       (take 5)
-       (pp/print-table)))
+<pre class="src src-clojure">(def stations-csv-path  "./data/station.csv")
+(println (:out (sh/sh "du" "-h" stations-csv-path)))
 </pre>
 </div>
 
 <pre class="example">
+8.0K	./data/station.csv
 
-| :id |                             :name |               :lat |               :long | :dock_count |    :city | :installation_date |
-|-----+-----------------------------------+--------------------+---------------------+-------------+----------+--------------------|
-|   2 | San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 |          27 | San Jose |           8/6/2013 |
-|   3 |             San Jose Civic Center |          37.330698 |         -121.888979 |          15 | San Jose |           8/5/2013 |
-|   4 |            Santa Clara at Almaden |          37.333988 |         -121.894902 |          11 | San Jose |           8/6/2013 |
-|   5 |                  Adobe on Almaden |          37.331415 |           -121.8932 |          19 | San Jose |           8/5/2013 |
-|   6 |                  San Pedro Square | 37.336721000000004 |         -121.894074 |          15 | San Jose |           8/7/2013 |
 nil
 </pre>
-</div>
-</div>
 
 
-<div id="outline-container-orgc65f56f" class="outline-3">
-<h3 id="orgc65f56f">Lets remove unwanted columns and transform data:</h3>
-<div class="outline-text-3" id="text-orgc65f56f">
+<p>
+Read and parse './data/station.csv'
+</p>
 <div class="org-src-container">
-<pre class="src src-clojure">(def data (with-open [reader (clojure.java.io/reader "./data/station.csv")]
-            (-&gt;&gt; (clojure.data.csv/read-csv reader)
-                 (sequence
-                  (comp
-                   (sct/remove-comments)
-                   (sct/mappify)
-                   (map #(dissoc-all % [:id]))
-                   (map #(clojure.set/rename-keys % {:dock_count :docks :installation_date :year}))
-                   (map #(update % :docks sc/-&gt;int))
-                   (map #(update % :year (comp  sc/-&gt;int (take-last-str 4))))))
-                 (doall))))
+<pre class="src src-clojure">(def stations-data
+  (time
+   (with-open [reader (clojure.java.io/reader stations-csv-path)]
+     (-&gt;&gt; (clojure.data.csv/read-csv reader)
+          (sequence (comp (sct/remove-comments)
+                          (sct/mappify)
+                          ;; (map #(dissoc-all % [:id]))
+                          (map #(clojure.set/rename-keys % {:dock_count :docks :installation_date :year}))
+                          (map #(update % :docks sc/-&gt;int))
+                          (map #(update % :id sc/-&gt;int))
+                          (map #(update % :year (comp  sc/-&gt;int (take-last-str 4))))))
+          (doall)))))
+</pre>
+</div>
 
-(println (size data))
-(-&gt;&gt; data
+<pre class="example">
+"Elapsed time: 7.978763 msecs"
+#'user/stations-data
+</pre>
+
+
+<p>
+Size of dataset
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(size stations-data)
+</pre>
+</div>
+<pre class="example">
+{:cols 7, :rows 70}
+</pre>
+
+
+<p>
+What columns are exists?
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(huri/cols stations-data)
+</pre>
+</div>
+
+<pre class="example">
+(:id :name :lat :long :city :docks :year)
+</pre>
+
+
+<p>
+Preview head of table:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(-&gt;&gt; stations-data
      (take 5)
      (pp/print-table))
 </pre>
 </div>
 
 <pre class="example">
-{:cols 6, :rows 70}
 
-|                             :name |               :lat |               :long |    :city | :docks | :year |
-|-----------------------------------+--------------------+---------------------+----------+--------+-------|
-| San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 | San Jose |     27 |  2013 |
-|             San Jose Civic Center |          37.330698 |         -121.888979 | San Jose |     15 |  2013 |
-|            Santa Clara at Almaden |          37.333988 |         -121.894902 | San Jose |     11 |  2013 |
-|                  Adobe on Almaden |          37.331415 |           -121.8932 | San Jose |     19 |  2013 |
-|                  San Pedro Square | 37.336721000000004 |         -121.894074 | San Jose |     15 |  2013 |
+| :id |                             :name |               :lat |               :long |    :city | :docks | :year |
+|-----+-----------------------------------+--------------------+---------------------+----------+--------+-------|
+|   2 | San Jose Diridon Caltrain Station |          37.329732 | -121.90178200000001 | San Jose |     27 |  2013 |
+|   3 |             San Jose Civic Center |          37.330698 |         -121.888979 | San Jose |     15 |  2013 |
+|   4 |            Santa Clara at Almaden |          37.333988 |         -121.894902 | San Jose |     11 |  2013 |
+|   5 |                  Adobe on Almaden |          37.331415 |           -121.8932 | San Jose |     19 |  2013 |
+|   6 |                  San Pedro Square | 37.336721000000004 |         -121.894074 | San Jose |     15 |  2013 |
 nil
 </pre>
 
+
+
 <p>
-How many dock station exists in every city?
+Set of questions taht could be targeted on that dataset:
 </p>
+<ul class="org-ul">
+<li>How many dock station are exists in each city?</li>
+<li>How many docks?</li>
+<li>What is smallest/largest size of stations in a city?</li>
+<li>Is there a big extent in manufacturing year on station across the city?</li>
+</ul>
 <div class="org-src-container">
-<pre class="src src-clojure" id="orge69c3d0">(def docks-by-city
+<pre class="src src-clojure" id="org701e09b">(def docks-by-city
   (huri/rollup-fuse
    :city {:stations     count
           :docks        [huri/sum :docks]
           :docks-extent [huri/extent :docks]
-          :year-extent  [huri/extent :year]} data))
+          :year-extent  [huri/extent :year]} stations-data))
 
 (pp/print-table docks-by-city)
 </pre>
@@ -174,16 +198,20 @@ nil
 </pre>
 
 
+<p>
+Compare number of docks in a city visually:
+</p>
 <div class="org-src-container">
-<pre class="src src-clojure" id="orga865d4b">(def bar-chart
-  {:data     {:values docks-by-city}
-   :encoding {:x {:field "docks" :type "quantitative"
-                  :axis  {:title "Number of stations"}}
-              :y {:field "city" :type "ordinal" :sort "-x"
-                  :axis  {:title nil}}}
-   :mark     "bar"})
+<pre class="src src-clojure" id="orge5811b3"> (def bar-chart
+   {:data     {:values docks-by-city}
+    :encoding {:x {:field "docks" :type "quantitative"
+                   :axis  {:title "Number of stations"}}
+               :y {:field "city" :type "ordinal" :sort "-x"
+                   :axis  {:title nil}}}
+    :width    300
+    :mark     "bar"})
 
-(temp-json-file "cities" bar-chart)
+(export-vega-csv "cities" bar-chart)
 </pre>
 </div>
 
@@ -195,32 +223,34 @@ Sorry, your browser does not support SVG.</object>
 </div>
 
 
+<p>
+Where does stations located in a San Francisco city?
+</p>
 <div class="org-src-container">
-<pre class="src src-clojure">(require '[huri.io])
-(def geojson (huri.io/slurp-json "./data/san-francisco.geojson"))
+<pre class="src src-clojure">(def geojson (huri.io/slurp-json "./data/san-francisco.geojson"))
+(def sf-data (-&gt;&gt; stations-data (huri/where {:city "San Francisco"})))
+(def common-layer-props
+  {:width      100
+   :height     100
+   :projection {:type :mercator}})
 
 (def bubble-chart
   {:layer
-   [{:data       {:values  geojson
-                  :format {:propery :features}}
-     :mark       {:type   :geoshape
-                  :fill   "#eee"
-                  :stroke "#fff"}
-     :width      100
-     :height     100
-     :projection {:type :mercator}}
+   (map
+    #(merge common-layer-props %)
+    [{:data {:values geojson
+             :format {:propery :features}}
+      :mark {:type   :geoshape
+             :fill   "#eee"
+             :stroke "#fff"}}
 
-    {:data       {:values (-&gt;&gt; data (huri/where {:city "San Francisco"}))}
-     :encoding   {:latitude  {:field :lat :type :quantitative}
-                  :longitude {:field :long :type :quantitative}
-                  :color     {:field :city :type :nominal :title "City"}}
-     :mark       :point
-     :width      100
-     :height     100
-     :projection {:type :mercator}}]})
+     {:data     {:values sf-data}
+      :encoding {:latitude  {:field :lat :type :quantitative}
+                 :longitude {:field :long :type :quantitative}
+                 :color     {:field :city :type :nominal :title "City"}}
+      :mark     :point}])})
 
-(temp-json-file "map" bubble-chart)
-
+(export-vega-csv "map" bubble-chart)
 </pre>
 </div>
 
@@ -232,6 +262,205 @@ Sorry, your browser does not support SVG.</object>
 </div>
 </div>
 </div>
+
+<div id="outline-container-org0c778fe" class="outline-2">
+<h2 id="org0c778fe">Observe 'trips.csv' dataset</h2>
+<div class="outline-text-2" id="text-org0c778fe">
+<div class="org-src-container">
+<pre class="src src-clojure">(def trip-csv-path   "./data/trip.csv")
+(println (:out (sh/sh "du" "-h" trip-csv-path)))
+</pre>
+</div>
+
+<pre class="example">
+ 76M	./data/trip.csv
+
+nil
+</pre>
+
+
+<p>
+Read and parse 'trip.csv'
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(def trips-data
+  (time
+   (with-open [reader (clojure.java.io/reader trip-csv-path)]
+     (-&gt;&gt; (clojure.data.csv/read-csv reader)
+          (sequence
+           (comp
+            (sct/remove-comments)
+            (sct/mappify)
+            (map #(dissoc-all % [:id :zip-code :end_date :start_date]))
+            (map #(update-all % [:duration :start_station_id
+                                 :id :bike_id :end_station_id] sc/-&gt;int))
+            (map #(update % :subscription_type -&gt;keyw))))
+          (doall)))))
+</pre>
+</div>
+
+<pre class="example">
+"Elapsed time: 7420.453026 msecs"
+#'user/trips-data
+</pre>
+
+
+<p>
+Size of datasets and columns:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(println (size trips-data))
+(huri/cols trips-data)
+</pre>
+</div>
+
+<pre class="example">
+{:cols 9, :rows 669959}
+(:zip_code
+ :start_station_name
+ :end_station_name
+ :duration
+ :start_station_id
+ :id
+ :bike_id
+ :end_station_id
+ :subscription_type)
+</pre>
+
+<p>
+Head of dataset
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(-&gt;&gt; trips-data
+     (sample 5)
+     (pp/print-table))
+</pre>
+</div>
+
+<pre class="example">
+
+| :zip_code |             :start_station_name |                       :end_station_name | :duration | :start_station_id | :id | :bike_id | :end_station_id | :subscription_type |
+|-----------+---------------------------------+-----------------------------------------+-----------+-------------------+-----+----------+-----------------+--------------------|
+|           |                 2nd at Townsend |                         2nd at Townsend |       667 |                61 |     |      469 |              61 |          :customer |
+|     94133 |                 Beale at Market |                           Market at 4th |       420 |                56 |     |      450 |              76 |        :subscriber |
+|      3783 | Grant Avenue at Columbus Avenue |           Powell at Post (Union Square) |      2304 |                73 |     |      355 |              71 |          :customer |
+|     33131 |            Washington at Kearny |                           Howard at 2nd |       491 |                46 |     |      290 |              63 |          :customer |
+|     94107 |                   Market at 4th | San Francisco Caltrain 2 (330 Townsend) |       419 |                76 |     |      439 |              69 |        :subscriber |
+nil
+</pre>
+
+
+<p>
+Group trips by city buckets, trips between cities in a separate bucket
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(def city-by-station
+  (memoize
+   (fn city-by-station [tid]
+     (:city (-&gt;&gt; stations-data
+                 (filter #(= (:id %) tid))
+                 first)))))
+
+(defn cross-city? [trip]
+  (let [start-city (city-by-station (:start_station_id trip))
+        end-city   (city-by-station (:end_station_id trip))]
+    (not= start-city end-city)))
+
+(defn city-name [trip]
+  (if (cross-city? trip)
+    "cross-city"
+    (city-by-station (:start_station_id trip))))
+
+(defn group-by-cities [dt]
+  (huri/rollup
+   city-name
+   identity
+   #(if (cross-city? %)
+      (-&gt; %
+          (assoc :start_city (city-by-station (:start_station_id %)))
+          (assoc :end_city   (city-by-station (:end_station_id %))))
+      (assoc % :city (city-by-station (:start_station_id %)))) dt))
+
+(def city-trips-data (time (group-by-cities trips-data)))
+</pre>
+</div>
+
+<pre class="example">
+"Elapsed time: 885.13596 msecs"
+#'user/city-trips-data
+</pre>
+
+
+<div class="org-src-container">
+<pre class="src src-clojure">(def stacked-bar-chart
+  {:data     {:values (into []
+                            (map #(hash-map :city (first %)
+                                            :count (count (last %))))
+                            city-trips-data)}
+   :mark     :bar
+   :encoding {:x     {:field :count :type :quantitative}
+              :y     {:field :city :type :nominal :sort "-x" :axis nil}
+              :color {:field :city :type :nominal}}})
+
+(vega-&gt;svg "trips-by-city" stacked-bar-chart)
+</pre>
+</div>
+
+
+<div class="figure">
+<p><object type="image/svg+xml" data="/assets/blog/strings-and-characters/trips-by-city.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+
+
+<p>
+Duration of ride:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(def sf-city-data (get city-trips-data "San Francisco"))
+
+(def duration-data
+  (-&gt;&gt; sf-city-data
+       (map :duration)
+       (partitions 10000)
+       (map huri/mean)
+       (map int)
+       (frequencies)
+       (map #(hash-map :data (first %)
+                       :count (second %)))))
+
+(def partitions-num-chart
+  {:data     {:values duration-data}
+   :width    800
+   :mark     :tick
+   :encoding {:x {:field :data :type :quantitative
+                  :scale {:type :log}}
+              :y {:field :count :type :quantitative}}})
+
+(def duration-chart
+  {:data {:values duration-data}
+   ;; :width {:step 16}
+   :width 500
+   ;; :mark {:type :bar :bin-spacing 0}
+   :mark :tick
+   :encoding {:x {:field :duration :type :quantitative
+                  ;; :bin true
+                  }
+              ;; :y {:field :count :type :quantitative}
+              }})
+
+(export-vega-csv "sf-durations" duration-chart)
+</pre>
+</div>
+
+
+<div class="figure">
+<p><object type="image/svg+xml" data="/assets/blog/strings-and-characters/sf-durations.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+</div>
 </div>
 
 </div>
@@ -239,7 +468,7 @@ Sorry, your browser does not support SVG.</object>
     <div>
       <div class="post-meta">
         <span title="post date" class="post-info">2019-11-18</span>
-        <span title="last modification date" class="post-info">2020-01-26</span>
+        <span title="last modification date" class="post-info">2020-04-16</span>
         <span title="tags" class="post-info"><a href="/tags/clojure/">clojure</a>, <a href="/tags/kaggle/">kaggle</a>, <a href="/tags/dataset/">dataset</a>, <a href="/tags/beginner/">beginner</a></span>
         <span title="author" class="post-info">Vladimir Kotushenko</span>
       </div>
