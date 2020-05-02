@@ -19,7 +19,7 @@ This is going to be examples of how clojure could be used from org-mode
 
 ** Incanter
 
-  #+begin_src clojure :results graphics file link :dir "./images/" :file "incanter.png" :exports both :eval never-export
+  #+begin_src clojure :results graphics file link :dir "./images/" :file "incanter.png" :exports both
     (use '(incanter core stats datasets charts io))
     (def hist (histogram (sample-normal 100)))
     ;; (view hist)
@@ -32,7 +32,7 @@ This is going to be examples of how clojure could be used from org-mode
 
 ** XCharts
 
-#+begin_src clojure :results graphics file link :dir "./images/" :file "xchart.png" :exports both :eval never-export
+#+begin_src clojure :results graphics file link :dir "./images/" :file "xchart.png" :exports both
   (require '[com.hypirion.clj-xchart :as c])
   (def chart (c/xy-chart
               {"Memory usage" {:x     (range 0 10 0.5)
@@ -63,7 +63,7 @@ This is going to be examples of how clojure could be used from org-mode
 
 ** Gnuplots
    - brew install gnuplots
-#+begin_src clojure :results graphics file link :dir "images/" :file "gnuplot.svg" :exports both :eval never-export
+#+begin_src clojure :results graphics file link :dir "images/" :file "gnuplot.svg" :exports both
   (require '[gnuplot.core :as g])
 
   (g/raw-plot!
@@ -94,7 +94,7 @@ This is going to be examples of how clojure could be used from org-mode
    - install vega globally ~npm i -g vega-cli~
    - install vega-lite globally ~npm i -g vega-lite~
    
-#+begin_src clojure :results graphics file link :dir "images/" :file "vega.svg" :exports both :eval never-export
+#+begin_src clojure :results graphics file link :dir "images/" :file "vega.svg" :exports both
   (require '[clojure.java.shell :as sh])
   (require '[clojure.data.json :as json])
 
