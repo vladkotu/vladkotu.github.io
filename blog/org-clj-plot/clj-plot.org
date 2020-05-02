@@ -19,16 +19,14 @@ This is going to be examples of how clojure could be used from org-mode
 
 ** Incanter
 
-  #+begin_src clojure :results graphics file link :dir "./images/" :file "incanter.png" :exports both :eval never-export
+  #+begin_src clojure :results graphics file :dir "./images/" :file "incanter.png" :exports both :eval never-export
     (use '(incanter core stats datasets charts io))
-    (def hist (histogram (sample-normal 100)))
-    ;; (view hist)
+    (def hist (histogram (sample-normal 10000)))
     (save hist "./images/incanter.png")
   #+end_src
 
   #+RESULTS:
   [[file:images/incanter.png]]
-
 
 ** XCharts
 
@@ -63,20 +61,19 @@ This is going to be examples of how clojure could be used from org-mode
 
 ** Gnuplots
    - brew install gnuplots
-#+begin_src clojure :results graphics file link :dir "images/" :file "gnuplot.svg" :exports both :eval never-export
+#+begin_src clojure :results graphics file link :dir "images/" :file "gnuplot.png" :exports both :eval never-export
   (require '[gnuplot.core :as g])
 
   (g/raw-plot!
    [[:set :title "simple-test" :font ",40"]
     [:set :style :textbox :opaque :noborder]
     [:set :boxwidth 1 :abs]
-    [:set :term :svg]
-    [:set :output "./images/gnuplot.svg"]
+    [:set :term :png]
+    [:set :output "./images/gnuplot.png"]
     [:plot
      (g/range :* :*)
      (g/list ["-" :title "rising" :with :filledcurve :x1]
              ["-" :title "falling" :with :boxes])]]
-
    [[[0 0] [1 1] [2 1.5]
      [3 1] [4 6] [5 4]]
     [[0 5] [1 4] [2 3]
@@ -84,7 +81,7 @@ This is going to be examples of how clojure could be used from org-mode
 #+END_SRC
 
 #+RESULTS:
-[[file:images/gnuplot.svg]]
+[[file:images/gnuplot.png]]
 
 ** Vega, Vega lite wrappers
 
@@ -94,7 +91,7 @@ This is going to be examples of how clojure could be used from org-mode
    - install vega globally ~npm i -g vega-cli~
    - install vega-lite globally ~npm i -g vega-lite~
    
-#+begin_src clojure :results graphics file link :dir "images/" :file "vega.svg" :exports both :eval never-export
+#+begin_src clojure :results graphics file :dir "images/" :file "vega.png" :exports both :eval never-export
   (require '[clojure.java.shell :as sh])
   (require '[clojure.data.json :as json])
 
@@ -123,11 +120,11 @@ This is going to be examples of how clojure could be used from org-mode
      :height   400
      :mark     "line"})
 
-  (sh/sh "vl2svg" (temp-json-file line-plot) "./images/vega.svg")
+  (sh/sh "vl2png" (temp-json-file line-plot) "./images/vega.png")
 #+END_SRC
 
 #+RESULTS:
-[[file:images/vega.svg]]
+[[file:images/vega.png]]
 
 Yes it is very possible!
 
