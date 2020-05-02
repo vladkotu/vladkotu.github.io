@@ -1,131 +1,287 @@
-#+TITLE:       Org-mode and Clojure
+#+TITLE:       Spacemacs Org-mode and Clojure
 #+AUTHOR:      Vladimir Kotushenko
 #+EMAIL:       volodymyr.kotushenko@gmail.com
 #+DATE:        2019-12-18 
-#+URI:         /blog/org-mode-clojure
-#+KEYWORDS:    clojure, org-mode, plotting
-#+TAGS:        clojure, beginner, org-mode, plotting
+#+URI:         /blog/spacemacs-org-mode-clojure-plotting
+#+KEYWORDS:    spacemacs, clojure, org-mode, plotting
+#+TAGS:        spcemcs, clojure, beginner, org-mode, plotting, literate programming
 #+LANGUAGE:    en
 #+OPTIONS:     H:5 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
-#+DESCRIPTION: This is going to be examples of how clojure could be used from org-mode.
+#+DESCRIPTION: How to do literate datascience programming in org-mode?
 
-* Org Clojure 
+* Spacemacs Org-mode and Clojure 
 
-This is going to be examples of how clojure could be used from org-mode
+  This is going to be examples of how clojure could be used from org-mode
 
+** Prerequisites
+   
+*** Spacemacs 
+    Install Spacemacs from =develop= branch.
+    Add desired org babel languages to =.spacemacs= file in =dotspacemacs/user-config= section
+    List of supported languages is [[https://orgmode.org/worg/org-contrib/babel/languages.html][here]]
+    #+begin_src emacs-lisp
+      (with-eval-after-load 'org
+        (org-babel-do-load-languages
+         'org-babel-load-languages
+         '((clojure . t))))
+    #+end_src
+    
+*** Clojure
+    Detailed installation instruction are [[https://clojure.org/guides/getting_started][here]] 
+   
+** Code execution
+
+   Create deps.edn file with dependencies
+   #+begin_src sh :results silent :eval no
+      echo "{}" >> deps.edn
+   #+end_src
+   In case of example there are no dependencies so that empty clojure map is
+   printed out to =deps.edn=
+
+   Create example org file for experiments:
+   #+begin_src sh :eval no
+     touch example.org
+   #+end_src
+
+   Now we can write some code:
+  
+*** Elementary results
+    #+begin_src clojure :results pp :exports both :eval never-export
+      ;; #+begin_src clojure :results pp
+      (defn power [n x]
+        (reduce * (repeat x n)))
+      (power 2 3)
+      ;; #+end_src
+    #+end_src
+
+    #+RESULTS:
+    : 8
+
+*** Results as table
+
+    List of lists - generate multiplication table
+    #+begin_src clojure :results value :exports both :eval never-export
+      ;; #+begin_src clojure :results value
+      (let [from  1
+            to    8
+            mults (for [x (range from to)
+                        y (range from to)]
+                    (* x y))
+            table (partition (- to from) mults)]
+        (list* (first table)
+               'hline
+               (rest table)))
+    #+end_src
+
+    #+RESULTS:
+    | 1 |  2 |  3 |  4 |  5 |  6 |  7 |
+    |---+----+----+----+----+----+----|
+    | 2 |  4 |  6 |  8 | 10 | 12 | 14 |
+    | 3 |  6 |  9 | 12 | 15 | 18 | 21 |
+    | 4 |  8 | 12 | 16 | 20 | 24 | 28 |
+    | 5 | 10 | 15 | 20 | 25 | 30 | 35 |
+    | 6 | 12 | 18 | 24 | 30 | 36 | 42 |
+    | 7 | 14 | 21 | 28 | 35 | 42 | 49 |
+
+    Vector of maps
+    #+begin_src clojure :results value table :exports both :eval no-exports
+      ;; #+begin_src clojure :results value table
+      [{:user/name "Bob"
+        :user/level :d1
+        :note "order # 1"}
+       {:user/name "Sara"
+        :user/level :l1
+        :note "order # 2"}]
+      ;; #+end_src
+    #+end_src
+
+    #+RESULTS:
+    | :user/name | Bob  | :user/level | :d1 | :note | order # 1 |
+    | :user/name | Sara | :user/level | :l1 | :note | order # 2 |
+
+    Print raw clojure's pprint table
+    #+begin_src clojure :results output  :exports both :eval no-exports
+      ;; #+begin_src clojure :results value pp
+      (clojure.pprint/print-table 
+       [{:user/name "Bob"
+         :user/level :d1
+         :note "order # 1"}
+        {:user/name "Sara"
+         :user/level :l1
+         :note "order # 2"}])
+      ;; #+end_src
+    #+end_src
+
+    #+RESULTS:
+    : 
+    : | :user/name | :user/level |     :note |
+    : |------------+-------------+-----------|
+    : |        Bob |         :d1 | order # 1 |
+    : |       Sara |         :l1 | order # 2 |
+
+    Create out own =print-org-table= helper function
+
+    #+begin_src clojure :results silent :exports code :eval no-exports
+      (defn print-org-table
+        ([rows] 
+         (print-org-table (keys (first rows)) rows))
+        ([ks rows]
+         (list* ks 'hline
+                (map #(for [k ks] (get % k)) rows))))
+    #+end_src
+
+    #+begin_src clojure :results value table :exports both :eval no-exports
+      ;; #+begin_src clojure :results value table
+      (print-org-table [{:user/name "Bob"
+                         :user/level :d1
+                         :note "order # 1"}
+                        {:user/name "Sara"
+                         :user/level :l1
+                         :note "order # 2"}])
+      ;; #+end_src
+    #+end_src
+    #+RESULTS:
+    | :user/name | :user/level | :note     |
+    |------------+-------------+-----------|
+    | Bob        | :d1         | order # 1 |
+    | Sara       | :l1         | order # 2 |
+
+*** List your results
+    #+begin_src clojure :results value list :exports both :eval no-exports
+      ;; #+begin_src clojure :results value list
+      {:user/name "Bob"
+       :user/level :d1
+       :note "order # 1"}
+      ;;#+end_src
+    #+end_src
+
+    #+RESULTS:
+    - :user/name
+    - Bob
+    - :user/level
+    - :d1
+    - :note
+    - order # 1
+
+
+
+** Working with tables
+   
 ** Plotting
- Is this possible to reproduce the case, [[https://stardiviner.github.io/Blog/Clojure-Plotting-to-Org-inline-image-in-ob-clojure.html][described in this article]] ?
- And add Vega charts to list of demos.
+   Is this possible to reproduce the case, [[https://stardiviner.github.io/Blog/Clojure-Plotting-to-Org-inline-image-in-ob-clojure.html][described in this article]] ?
+   And add Vega charts to list of demos.
 
-** Incanter
+*** Incanter
 
-  #+begin_src clojure :results graphics file :dir "./images/" :file "incanter.png" :exports both :eval never-export
-    (use '(incanter core stats datasets charts io))
-    (def hist (histogram (sample-normal 10000)))
-    (save hist "./images/incanter.png")
-  #+end_src
+    #+begin_src clojure :results graphics file :dir "./images/" :file "incanter.png" :exports both :eval never-export
+      (use '(incanter core stats datasets charts io))
+      (def hist (histogram (sample-normal 10000)))
+      (save hist "./images/incanter.png")
+    #+end_src
 
-  #+RESULTS:
-  [[file:images/incanter.png]]
+    #+RESULTS:
+    [[file:images/incanter.png]]
 
-** XCharts
 
-#+begin_src clojure :results graphics file link :dir "./images/" :file "xchart.png" :exports both :eval never-export
-  (require '[com.hypirion.clj-xchart :as c])
-  (def chart (c/xy-chart
-              {"Memory usage" {:x     (range 0 10 0.5)
-                               :y     [0.0 0.5 2.3 4.5 2.7 4.5 6.7
-                                       9.0 9.3 9.5 6.7 7.5 8.8 10.3
-                                       9.7 11.4 5.6 4.5 5.6 1.2]
-                               :style {:marker-type :none}}
-               "Total memory" {:x     [-100 100]
-                               :y     [12 12]
-                               :style {:render-style :line
-                                       :marker-type  :none
-                                       :line-color   :red}}}
-              {:title        "Memory usage"
-               :render-style :area
-               :x-axis       {:title "Time (min)"
-                              :min   0
-                              :max   10}
-               :y-axis       {:title "Memory (GB)"
-                              :max   15}
-               :legend       {:position :inside-nw}}))
 
-  ;; (c/view chart)
-  (c/spit chart "./images/xchart.png")
-#+END_SRC
 
-#+RESULTS:
-[[file:images/xchart.png]]
+*** XCharts
+    #+begin_src clojure :results graphics file :dir "./images/" :file "xchart.png" :exports both :eval never-export
+      (require '[com.hypirion.clj-xchart :as c])
+      (def chart (c/xy-chart
+                  {"Memory usage" {:x     (range 0 10 0.5)
+                                   :y     [0.0 0.5 2.3 4.5 2.7 4.5 6.7
+                                           9.0 9.3 9.5 6.7 7.5 8.8 10.3
+                                           9.7 11.4 5.6 4.5 5.6 1.2]
+                                   :style {:marker-type :none}}
+                   "Total memory" {:x     [-100 100]
+                                   :y     [12 12]
+                                   :style {:render-style :line
+                                           :marker-type  :none
+                                           :line-color   :red}}}
+                  {:title        "Memory usage"
+                   :render-style :area
+                   :x-axis       {:title "Time (min)"
+                                  :min   0
+                                  :max   10}
+                   :y-axis       {:title "Memory (GB)"
+                                  :max   15}
+                   :legend       {:position :inside-nw}}))
 
-** Gnuplots
-   - brew install gnuplots
-#+begin_src clojure :results graphics file link :dir "images/" :file "gnuplot.png" :exports both :eval never-export
-  (require '[gnuplot.core :as g])
+      ;; (c/view chart)
+      (c/spit chart "./images/xchart.png")
+    #+END_SRC
 
-  (g/raw-plot!
-   [[:set :title "simple-test" :font ",40"]
-    [:set :style :textbox :opaque :noborder]
-    [:set :boxwidth 1 :abs]
-    [:set :term :png]
-    [:set :output "./images/gnuplot.png"]
-    [:plot
-     (g/range :* :*)
-     (g/list ["-" :title "rising" :with :filledcurve :x1]
-             ["-" :title "falling" :with :boxes])]]
-   [[[0 0] [1 1] [2 1.5]
-     [3 1] [4 6] [5 4]]
-    [[0 5] [1 4] [2 3]
-     [3 2] [4 1] [5 0]]])
-#+END_SRC
+    #+RESULTS:
+    [[file:images/xchart.png]]
 
-#+RESULTS:
-[[file:images/gnuplot.png]]
+*** Gnuplots
+    - brew install gnuplots
+    #+begin_src clojure :results graphics file link :dir "images/" :file "gnuplot.png" :exports both :eval never-export
+      (require '[gnuplot.core :as g])
 
-** Vega, Vega lite wrappers
+      (g/raw-plot!
+       [[:set :title "simple-test" :font ",40"]
+        [:set :style :textbox :opaque :noborder]
+        [:set :boxwidth 1 :abs]
+        [:set :term :png]
+        [:set :output "./images/gnuplot.png"]
+        [:plot
+         (g/range :* :*)
+         (g/list ["-" :title "rising" :with :filledcurve :x1]
+                 ["-" :title "falling" :with :boxes])]]
+       [[[0 0] [1 1] [2 1.5]
+         [3 1] [4 6] [5 4]]
+        [[0 5] [1 4] [2 3]
+         [3 2] [4 1] [5 0]]])
+    #+END_SRC
 
-   Oz can view but not possible yet to export to svg programmatically
-   However vega-cli tools could be used to convert Vega spec to any format
+    #+RESULTS:
+    [[file:images/gnuplot.png]]
+
+*** Vega, Vega lite wrappers
+
+    Oz can view but not possible yet to export to svg programmatically
+    However vega-cli tools could be used to convert Vega spec to any format
    
-   - install vega globally ~npm i -g vega-cli~
-   - install vega-lite globally ~npm i -g vega-lite~
+    - install vega globally ~npm i -g vega-cli~
+    - install vega-lite globally ~npm i -g vega-lite~
    
-#+begin_src clojure :results graphics file :dir "images/" :file "vega.png" :exports both :eval never-export
-  (require '[clojure.java.shell :as sh])
-  (require '[clojure.data.json :as json])
+    #+begin_src clojure :results graphics file :dir "images/" :file "vega.png" :exports both :eval never-export
+      (require '[clojure.java.shell :as sh])
+      (require '[clojure.data.json :as json])
 
-  (defn temp-json-file
-    "helper function convert clj vega spec to json and store it as tmp file"
-    [content]
-    (let [tmp-file (java.io.File/createTempFile "vega." ".json")]
-      (.deleteOnExit tmp-file)
-      (with-open [file (clojure.java.io/writer tmp-file)]
-        (json/write content file))
-      (.getAbsolutePath tmp-file)))
+      (defn temp-json-file
+        "helper function convert clj vega spec to json and store it as tmp file"
+        [content]
+        (let [tmp-file (java.io.File/createTempFile "vega." ".json")]
+          (.deleteOnExit tmp-file)
+          (with-open [file (clojure.java.io/writer tmp-file)]
+            (json/write content file))
+          (.getAbsolutePath tmp-file)))
 
-  (defn play-data [& names]
-    (for [n names
-          i (range 200)]
-      {:time     i
-       :item     n
-       :quantity (+ (Math/pow (* i (count n)) 0.8) (rand-int (count n)))}))
+      (defn play-data [& names]
+        (for [n names
+              i (range 200)]
+          {:time     i
+           :item     n
+           :quantity (+ (Math/pow (* i (count n)) 0.8) (rand-int (count n)))}))
 
-  (def line-plot
-    {:data     {:values (play-data "monkey" "slipper" "broom")}
-     :encoding {:x     {:field "time" :type "ordinal"}
-                :y     {:field "quantity" :type "quantitative"}
-                :color {:field "item" :type "nominal"}}
-     :width    400
-     :height   400
-     :mark     "line"})
+      (def line-plot
+        {:data     {:values (play-data "monkey" "slipper" "broom")}
+         :encoding {:x     {:field "time" :type "ordinal"}
+                    :y     {:field "quantity" :type "quantitative"}
+                    :color {:field "item" :type "nominal"}}
+         :width    400
+         :height   400
+         :mark     "line"})
 
-  (sh/sh "vl2png" (temp-json-file line-plot) "./images/vega.png")
-#+END_SRC
+      (sh/sh "vl2png" (temp-json-file line-plot) "./images/vega.png")
+    #+END_SRC
 
-#+RESULTS:
-[[file:images/vega.png]]
+    #+RESULTS:
+    [[file:images/vega.png]]
 
-Yes it is very possible!
+    Yes it is very possible!
 
-[TBD]
+    [TBD]
